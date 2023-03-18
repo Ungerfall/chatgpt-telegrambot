@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import requests
 import os
-from flask import Flask, request, render_template
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 app = Flask(__name__)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -41,11 +41,20 @@ def handle_text_message(update: Update, context: CallbackContext):
     chat_gpt_reply = chat_gpt_response(chat_gpt_prompt)
     update.message.reply_text(chat_gpt_reply)
 
-@app.route('/hello')
+@app.route('/index')
+def index():
+   print('Request for index page received')
+   return render_template('index.html')
+
+@app.route('/hello', methods=['POST'])
 def hello():
-    name = "Fekalnye apparaty s pedalnym vertikalnym vzletom"
-    print('Request for hello page received with name=%s' % name)
-    return render_template('hello.html', name = name)
+   name = request.form.get('name')
+
+   if name:
+       print('Request for hello page received with name=%s' % name)
+       return render_template('hello.html', name = name)
+   else:
+       print('Request for hello page received with no name or blank name -- redirecting')
 
 @app.route(f'/{TELEGRAM_BOT_TOKEN}', methods=['POST'])
 def webhook_handler():
