@@ -30,7 +30,12 @@ def chat_gpt_response(prompt):
     else:
         return "Error: Unable to get a response from the ChatGPT API."
 def handle_text_message(update: Update, context: CallbackContext):
+    user = update.message.from_user
+    chat_id = update.message.chat.id
     user_message = update.message.text
+
+    logger.info(f"Received message in chat {chat_id}: {user_message}")
+
     chat_gpt_prompt = f"{user_message}"
     chat_gpt_reply = chat_gpt_response(chat_gpt_prompt)
     update.message.reply_text(chat_gpt_reply)
@@ -44,15 +49,19 @@ def webhook_handler():
     return 'OK'
 
 def main():
+    logger.info("starting...")
     updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
 
+    logger.info("adding handler...")
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_text_message))
 
     # Set webhook
     bot = updater.bot
+    logger.info("setting webhook...")
     bot.set_webhook(url=f'https://app-chatgpt-ungerfall.azurewebsites.net/{TELEGRAM_BOT_TOKEN}')
 
+    logger.info("running...")
     app.run()
 
 if __name__ == '__main__':
