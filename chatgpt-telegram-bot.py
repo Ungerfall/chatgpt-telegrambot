@@ -3,9 +3,10 @@ from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import requests
 import os
-from flask import Flask, request
+from flask import Flask, request, render_template
+app = Flask(__name__)
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
 OPENAI_API_KEY = os.environ.get("OPEN_API_KEY")
@@ -40,7 +41,11 @@ def handle_text_message(update: Update, context: CallbackContext):
     chat_gpt_reply = chat_gpt_response(chat_gpt_prompt)
     update.message.reply_text(chat_gpt_reply)
 
-app = Flask(__name__)
+@app.route('/hello')
+def hello():
+    name = "Fekalnye apparaty s pedalnym vertikalnym vzletom"
+    print('Request for hello page received with name=%s' % name)
+    return render_template('hello.html', name = name)
 
 @app.route(f'/{TELEGRAM_BOT_TOKEN}', methods=['POST'])
 def webhook_handler():
