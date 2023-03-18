@@ -1,0 +1,60 @@
+import logging
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import requests
+import os
+from flask import Flask, request
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
+
+OPENAI_API_KEY = os.environ.get("OPEN_API_KEY")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+CHATGPT_API_ENDPOINT = os.environ.get("CHATGPT_API_ENDPOINT")
+
+def chat_gpt_response(prompt):
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {OPENAI_API_KEY}'
+    }
+    data = {
+        'prompt': prompt,
+        'max_tokens': 100,
+        'temperature': 0.8,
+    }
+    response = requests.post(CHATGPT_API_ENDPOINT, headers=headers, json=data)
+    response_json = response.json()
+
+    if 'choices' in response_json and len(response_json['choices']) > 0:
+        return response_json['choices'][0]['text'].strip()
+    else:
+        return "Error: Unable to get a response from the ChatGPT API."
+def handle_text_message(update: Update, context: CallbackContext):
+    user_message = update.message.text
+    chat_gpt_prompt = f"{user_message}"
+    chat_gpt_reply = chat_gpt_response(chat_gpt_prompt)
+    update.message.reply_text(chat_gpt_reply)
+
+app = Flask(__name__)
+
+@app.route(f'/{TELEGRAM_BOT_TOKEN}', methods=['POST'])
+def webhook_handler():
+    update = Update.de_json(request.get_json(force=True), context.bot)
+    context.update_queue.put(update)
+    return 'OK'
+
+def main():
+    updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
+
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_text_message))
+
+    # Set webhook
+    bot = updater.bot
+    bot.set_webhook(url=f'https://app-chatgpt-ungerfall.azurewebsites.net/{TELEGRAM_BOT_TOKEN}')
+
+    app.run()
+
+if __name__ == '__main__':
+    main()
+
