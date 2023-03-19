@@ -4,6 +4,7 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace ChatGPT.TelegramBot.Services;
 
@@ -44,7 +45,15 @@ public class UpdateHandler : IUpdateHandler
         if (message.Text is not { } messageText)
             return;
 
-        if (message.Chat.Id != -1034436662)
+        bool containMention = message.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
+        bool isBotMentioned = containMention && (message.EntityValues?.Any(x => x.Equals("@chatgpt_ungerfall_bot")) ?? false);
+        if (!isBotMentioned)
+        {
+            _logger.LogInformation("The message does not contain mention of bot.");
+            return;
+        }
+
+        if (message.Chat.Id != -1001034436662)
         {
             await _botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
@@ -58,6 +67,7 @@ public class UpdateHandler : IUpdateHandler
         Message sentMessage = await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: chatGptResponse,
+            replyToMessageId: message.MessageId,
             cancellationToken: cancellationToken);
 
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
