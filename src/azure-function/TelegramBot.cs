@@ -22,7 +22,7 @@ namespace azure_function
         }
 
         [Function("TelegramBot")]
-        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req,
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req,
             CancellationToken cancellation)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
