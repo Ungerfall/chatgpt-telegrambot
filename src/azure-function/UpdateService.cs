@@ -90,7 +90,7 @@ namespace azure_function
                 {
                     Messages = new[]
                     {
-                        ChatMessage.FromSystem("You are a helpful assistant."),
+                        ChatMessage.FromSystem("You are an AI that provides brief and concise answers."),
                         ChatMessage.FromUser(message),
                     },
                     Temperature = 0f,
