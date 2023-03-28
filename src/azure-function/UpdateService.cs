@@ -71,6 +71,10 @@ namespace azure_function
                 return;
             }
 
+            await _botClient.SendChatActionAsync(
+                chatId: message.Chat.Id,
+                ChatAction.Typing,
+                cancellationToken: cancellation);
             var chatGptResponse = await SendChatGptMessage(message.Text, message.From?.Username ?? "unknown", cancellation);
             Message sentMessage = await _botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
