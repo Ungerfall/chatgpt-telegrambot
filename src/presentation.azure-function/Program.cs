@@ -1,10 +1,10 @@
-using azure_function;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenAI.GPT3.Extensions;
 using OpenAI.GPT3.ObjectModels;
 using System;
 using Telegram.Bot;
+using Ungerfall.ChatGpt.TelegramBot;
 
 var tgToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.Process)
     ?? throw new ArgumentException("TELEGRAM_BOT_TOKEN is missing");
@@ -25,7 +25,7 @@ var host = new HostBuilder()
             setup.Organization = openAiOrg;
             setup.DefaultModelId = Models.ChatGpt3_5Turbo;
         });
-        s.AddScoped<UpdateService>();
+        s.AddScoped<UpdateHandler>();
     })
     .Build();
 

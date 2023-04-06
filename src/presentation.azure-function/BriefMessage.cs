@@ -1,5 +1,3 @@
-using azure_function.Database;
-using azure_function.Queue;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using OpenAI.GPT3.Interfaces;
@@ -7,6 +5,8 @@ using OpenAI.GPT3.ObjectModels.RequestModels;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Ungerfall.ChatGpt.TelegramBot.Database;
+using Ungerfall.ChatGpt.TelegramBot.Queue;
 
 namespace azure_function;
 

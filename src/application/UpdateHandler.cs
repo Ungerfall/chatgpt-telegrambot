@@ -10,17 +10,18 @@ using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace azure_function;
+namespace Ungerfall.ChatGpt.TelegramBot;
 
-public class UpdateService
+public class UpdateHandler
 {
     private const long OurChatGroupId = -1001034436662;
+    private const string BotUsername = "@chatgpt_ungerfall_bot";
 
     private readonly ITelegramBotClient _botClient;
-    private readonly ILogger<UpdateService> _logger;
+    private readonly ILogger<UpdateHandler> _logger;
     private readonly IOpenAIService _openAiService;
 
-    public UpdateService(ITelegramBotClient botClient, ILogger<UpdateService> logger, IOpenAIService openAiService)
+    public UpdateHandler(ITelegramBotClient botClient, ILogger<UpdateHandler> logger, IOpenAIService openAiService)
     {
         _botClient = botClient;
         _logger = logger;
@@ -33,14 +34,22 @@ public class UpdateService
 
         var handler = update switch
         {
-            // UpdateType.Unknown:
-            // UpdateType.ChannelPost:
-            // UpdateType.EditedChannelPost:
-            // UpdateType.ShippingQuery:
-            // UpdateType.PreCheckoutQuery:
-            // UpdateType.Poll:
+            /*
+             { EditedMessage: { } }      => UpdateType.EditedMessage,
+             { InlineQuery: { } }        => UpdateType.InlineQuery,
+             { ChosenInlineResult: { } } => UpdateType.ChosenInlineResult,
+             { CallbackQuery: { } }      => UpdateType.CallbackQuery,
+             { ChannelPost: { } }        => UpdateType.ChannelPost,
+             { EditedChannelPost: { } }  => UpdateType.EditedChannelPost,
+             { ShippingQuery: { } }      => UpdateType.ShippingQuery,
+             { PreCheckoutQuery: { } }   => UpdateType.PreCheckoutQuery,
+             { Poll: { } }               => UpdateType.Poll,
+             { PollAnswer: { } }         => UpdateType.PollAnswer,
+             { MyChatMember: { } }       => UpdateType.MyChatMember,
+             { ChatMember: { } }         => UpdateType.ChatMember,
+             { ChatJoinRequest: { } }    => UpdateType.ChatJoinRequest,
+            */
             { Message: { } message } => BotOnMessageReceived(message, cancellation),
-            { EditedMessage: { } message } => BotOnMessageReceived(message, cancellation),
             _ => UnknownUpdateHandlerAsync(update, cancellation)
         };
 
@@ -64,7 +73,7 @@ public class UpdateService
         }
 
         bool containMention = message.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
-        bool isBotMentioned = containMention && (message.EntityValues?.Any(x => x.Equals("@chatgpt_ungerfall_bot")) ?? false);
+        bool isBotMentioned = containMention && (message.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false);
         if (!isBotMentioned)
         {
             _logger.LogInformation("The message does not contain mention of bot.");

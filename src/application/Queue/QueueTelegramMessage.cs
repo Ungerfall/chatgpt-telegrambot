@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace azure_function.Queue;
+namespace Ungerfall.ChatGpt.TelegramBot.Queue;
 
 public class QueueTelegramMessage
 {

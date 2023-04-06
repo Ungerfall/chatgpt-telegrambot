@@ -1,8 +1,12 @@
-﻿using Telegram.Bot;
+﻿using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 
-namespace ChatGPT.TelegramBot.Abstract;
+namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction.Abstract;
 
 /// <summary>
 /// An abstract class to compose Receiver Service and Update Handler classes

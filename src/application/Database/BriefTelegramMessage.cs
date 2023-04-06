@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace azure_function.Database;
+namespace Ungerfall.ChatGpt.TelegramBot.Database;
 
 public class BriefTelegramMessage
 {

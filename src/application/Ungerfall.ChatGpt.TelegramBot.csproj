@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ungerfall.ChatGpt.TelegramBot</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Telegram.Bot" Version="19.0.0-preview.2" />
+    <PackageReference Include="Betalgo.OpenAI.GPT3" Version="6.8.3" />
+  </ItemGroup>
+
+</Project>

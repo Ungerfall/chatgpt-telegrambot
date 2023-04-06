@@ -1,9 +1,12 @@
-using ChatGPT.TelegramBot.Services;
 using ChatGPT.TelegramBot.Worker;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using OpenAI.GPT3.Extensions;
 using OpenAI.GPT3.ObjectModels;
+using System;
 using Telegram.Bot;
+using Ungerfall.ChatGpt.TelegramBot.AzureFunction.Services;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
@@ -31,7 +34,7 @@ IHost host = Host.CreateDefaultBuilder(args)
             setup.DefaultModelId = Models.ChatGpt3_5Turbo;
         });
 
-        services.AddScoped<UpdateHandler>();
+        services.AddScoped<PollingUpdateHandler>();
         services.AddScoped<ReceiverService>();
         services.AddHostedService<PollingService>();
     })

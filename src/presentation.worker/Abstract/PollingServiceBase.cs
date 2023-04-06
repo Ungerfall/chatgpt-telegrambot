@@ -1,4 +1,11 @@
-﻿namespace ChatGPT.TelegramBot.Abstract;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction.Abstract;
 
 // A background service consuming a scoped service.
 // See more: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services#consuming-a-scoped-service-in-a-background-task

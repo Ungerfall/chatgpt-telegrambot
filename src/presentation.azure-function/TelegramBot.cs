@@ -8,14 +8,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace azure_function;
+namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 
 public class TelegramBot
 {
     private readonly ILogger _logger;
-    private readonly UpdateService _updateService;
+    private readonly UpdateHandler _updateService;
 
-    public TelegramBot(ILoggerFactory loggerFactory, UpdateService updateService)
+    public TelegramBot(ILoggerFactory loggerFactory, UpdateHandler updateService)
     {
         _logger = loggerFactory.CreateLogger<TelegramBot>();
         _updateService = updateService;
