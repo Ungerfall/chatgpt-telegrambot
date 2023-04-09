@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace ChatGPT.TelegramBot.Worker;
+namespace Ungerfall.ChatGpt.TelegramBot.Worker;
 
 public class Configuration
 {
