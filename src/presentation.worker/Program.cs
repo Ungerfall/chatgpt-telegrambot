@@ -45,12 +45,15 @@ IHost host = Host.CreateDefaultBuilder(args)
         });
         services.AddAzureClients(c =>
         {
-            c.AddClient<CosmosClient, CosmosDbOptions>(opt => new CosmosClient(
-                opt.ConnectionString,
-                clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 }));
             c.AddServiceBusClient(context.Configuration["ServiceBusConnection"]);
         });
-
+        services.AddSingleton(sp =>
+        {
+            var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
+            return new CosmosClient(
+                opt.ConnectionString,
+                clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 });
+        });
         services.AddScoped<BriefTelegramMessageRepository>();
         services.AddScoped<PollingUpdateHandler>();
         services.AddScoped<ReceiverService>();

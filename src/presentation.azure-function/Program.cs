@@ -2,6 +2,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using OpenAI.GPT3.Extensions;
 using OpenAI.GPT3.ObjectModels;
 using System;
@@ -39,10 +40,14 @@ var host = new HostBuilder()
         });
         s.AddAzureClients(c =>
         {
-            c.AddClient<CosmosClient, CosmosDbOptions>(opt => new CosmosClient(
-                opt.ConnectionString,
-                clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 }));
             c.AddServiceBusClient(Environment.GetEnvironmentVariable("ServiceBusConnection", EnvironmentVariableTarget.Process));
+        });
+        s.AddSingleton(sp =>
+        {
+            var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
+            return new CosmosClient(
+                opt.ConnectionString,
+                clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 });
         });
         s.AddScoped<BriefTelegramMessageRepository>();
         s.AddScoped<UpdateHandler>();

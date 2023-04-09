@@ -50,10 +50,10 @@ public class BriefTelegramMessageRepository
     public async IAsyncEnumerable<BriefTelegramMessage> GetAllOrderByDateDescending([EnumeratorCancellation] CancellationToken cancellation)
     {
         var container = _cosmos.GetContainer(_options.DatabaseId, _options.BriefMessagesContainerId);
-        using var it = container.GetItemQueryIterator<BriefTelegramMessage>(requestOptions: new QueryRequestOptions
-        {
-            MaxConcurrency = 1,
-        });
+        var query = new QueryDefinition("SELECT * FROM c ORDER BY c.date DESC");
+        using var it = container.GetItemQueryIterator<BriefTelegramMessage>(
+            query,
+            requestOptions: new QueryRequestOptions { MaxConcurrency = 1, });
         while (it.HasMoreResults)
         {
             FeedResponse<BriefTelegramMessage> response = await it.ReadNextAsync(cancellation);
