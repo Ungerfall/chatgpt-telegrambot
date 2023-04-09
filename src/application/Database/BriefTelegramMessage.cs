@@ -17,7 +17,7 @@ public class BriefTelegramMessage
     public long UserId { get; init; }
 
     [JsonPropertyName("message")]
-    public string Message { get; init; } = null!;
+    public string Message { get; set; } = null!;
 
     [JsonPropertyName("messageId")]
     public int MessageId { get; init; }

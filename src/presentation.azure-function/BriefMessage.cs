@@ -1,4 +1,4 @@
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using OpenAI.GPT3.Interfaces;
 using OpenAI.GPT3.ObjectModels.RequestModels;
@@ -33,20 +33,33 @@ public class BriefMessage
     {
         _logger.LogInformation("C# ServiceBus queue trigger function processed message: {msg}", msg.Message);
         var date = DateOnly.FromDateTime(DateTime.UtcNow).ToString(BriefTelegramMessage.DATE_UTC_FORMAT);
-
-        return new BriefTelegramMessage
+        var tokensCount = CalculateTokens(msg.Message);
+        var briefMsg = new BriefTelegramMessage
         {
             Id = Guid.NewGuid(),
             User = msg.User,
             UserId = msg.UserId,
-            Message = CalculateTokens(msg.Message) <= MIN_TOKENS_COUNT
-                ? msg.Message
-                : await AskChatGptForBriefMessage(msg),
             MessageId = msg.MessageId,
             Date = msg.Date,
             DateUtc = date,
             TTL = TTL_TWO_DAYS
         };
+
+        if (tokensCount <= MIN_TOKENS_COUNT)
+        {
+            briefMsg.Message = msg.Message;
+        }
+        else
+        {
+            var gpt = await AskChatGptForBriefMessage(msg);
+            var gptTokensCount = CalculateTokens(gpt);
+            // if gpt version is longer keep original version
+            briefMsg.Message = gptTokensCount >= tokensCount
+                ? msg.Message
+                : briefMsg.Message = gpt;
+        }
+
+        return briefMsg;
     }
 
     private static int CalculateTokens(string msg)
@@ -62,8 +75,8 @@ public class BriefMessage
             {
                 Messages = new[]
                 {
-                    ChatMessage.FromSystem("You are an AI that provides brief and concise answers."),
-                    ChatMessage.FromUser("Make brief and short: " + msg.Message),
+                    ChatMessage.FromSystem("Вы — искусственный интеллект, дающий краткие и лаконичные ответы."),
+                    ChatMessage.FromUser("Сделай коротко и лаконично: " + msg.Message),
                 },
                 Temperature = 0f,
                 User = msg.User,
