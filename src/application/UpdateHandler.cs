@@ -115,7 +115,7 @@ public class UpdateHandler
         var q = _serviceBus.CreateSender(QueueTelegramMessage.QUEUE_NAME);
         var qMsg = new ServiceBusMessage(JsonSerializer.Serialize(new QueueTelegramMessage
         {
-            User = msg.From?.Username ?? "unknown",
+            User = msg.From?.FirstName ?? msg.From?.Username ?? "unknown",
             UserId = msg.From?.Id ?? default,
             Message = msg.Text!, // null check upwards
             MessageId = msg.MessageId,
@@ -128,7 +128,7 @@ public class UpdateHandler
     {
         _logger.LogInformation("Sending {Message} from {User}", message, user);
 
-        var gptMessage = new ConversationHistory(_history, $"{user}: {message}");
+        var gptMessage = new ConversationHistory(_history, $"{user}: {message}", _logger);
         var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
             new ChatCompletionCreateRequest
             {
@@ -143,6 +143,7 @@ public class UpdateHandler
         }
         else
         {
+            _logger.LogError("ChatGPT error: {@error}", new { completionResult.Error?.Type, completionResult.Error?.Message } );
             return "ChatGPT request wasn't successful";
         }
     }
