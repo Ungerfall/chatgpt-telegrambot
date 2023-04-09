@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using Ungerfall.ChatGpt.TelegramBot.AzureFunction.Abstract;
+using Ungerfall.ChatGpt.TelegramBot.Worker.Abstract;
 
-namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction.Services;
+namespace Ungerfall.ChatGpt.TelegramBot.Worker.Services;
 
 // Compose Polling and ReceiverService implementations
 public class PollingService : PollingServiceBase<ReceiverService>

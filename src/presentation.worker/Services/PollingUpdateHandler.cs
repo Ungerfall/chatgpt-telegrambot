@@ -5,7 +5,7 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 
-namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction.Services;
+namespace Ungerfall.ChatGpt.TelegramBot.Worker.Services;
 
 public class PollingUpdateHandler : IUpdateHandler
 {

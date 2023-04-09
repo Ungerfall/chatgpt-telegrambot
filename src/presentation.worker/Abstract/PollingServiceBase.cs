@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction.Abstract;
+namespace Ungerfall.ChatGpt.TelegramBot.Worker.Abstract;
 
 // A background service consuming a scoped service.
 // See more: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services#consuming-a-scoped-service-in-a-background-task

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Telegram.Bot;
-using Ungerfall.ChatGpt.TelegramBot.AzureFunction.Abstract;
+using Ungerfall.ChatGpt.TelegramBot.Worker.Abstract;
 
-namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction.Services;
+namespace Ungerfall.ChatGpt.TelegramBot.Worker.Services;
 
 // Compose Receiver and UpdateHandler implementation
 public class ReceiverService : ReceiverServiceBase<PollingUpdateHandler>

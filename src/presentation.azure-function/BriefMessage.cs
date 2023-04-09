@@ -29,18 +29,21 @@ public class BriefMessage
         containerName: "%CosmosTelegramMessagesContainer%",
         Connection = "CosmosDbConnectionString",
         CreateIfNotExists = true)]
-    public async Task<BriefTelegramMessage> Run([ServiceBusTrigger("tgbot-messages", Connection = "ServiceBusConnection")] QueueTelegramMessage msg)
+    public async Task<BriefTelegramMessage> Run([ServiceBusTrigger(QueueTelegramMessage.QUEUE_NAME, Connection = "ServiceBusConnection")] QueueTelegramMessage msg)
     {
         _logger.LogInformation("C# ServiceBus queue trigger function processed message: {msg}", msg.Message);
-        var date = DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd");
+        var date = DateOnly.FromDateTime(DateTime.UtcNow).ToString(BriefTelegramMessage.DATE_UTC_FORMAT);
 
         return new BriefTelegramMessage
         {
             Id = Guid.NewGuid(),
             User = msg.User,
+            UserId = msg.UserId,
             Message = CalculateTokens(msg.Message) <= MIN_TOKENS_COUNT
                 ? msg.Message
                 : await AskChatGptForBriefMessage(msg),
+            MessageId = msg.MessageId,
+            Date = msg.Date,
             DateUtc = date,
             TTL = TTL_TWO_DAYS
         };
