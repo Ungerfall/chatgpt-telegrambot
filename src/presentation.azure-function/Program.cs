@@ -50,6 +50,7 @@ var host = new HostBuilder()
                 clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 });
         });
         s.AddScoped<BriefTelegramMessageRepository>();
+        s.AddScoped<TokenCounter>();
         s.AddScoped<UpdateHandler>();
     })
     .Build();

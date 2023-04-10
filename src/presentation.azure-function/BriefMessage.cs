@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 using OpenAI.GPT3.Interfaces;
 using OpenAI.GPT3.ObjectModels.RequestModels;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
+using Ungerfall.ChatGpt.TelegramBot;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.Queue;
 
@@ -12,16 +12,18 @@ namespace azure_function;
 
 public class BriefMessage
 {
-    private const int MIN_TOKENS_COUNT = 5;
+    private const int MIN_TOKENS_COUNT = 25;
     private const int TTL_TWO_DAYS = 2 * 24 * 60 * 60;
 
     private readonly ILogger _logger;
     private readonly IOpenAIService _openAiService;
+    private readonly TokenCounter _tokenCounter;
 
-    public BriefMessage(ILogger<BriefMessage> logger, IOpenAIService openAiService)
+    public BriefMessage(ILogger<BriefMessage> logger, IOpenAIService openAiService, TokenCounter tokenCounter)
     {
         _logger = logger;
         _openAiService = openAiService;
+        _tokenCounter = tokenCounter;
     }
 
     [Function("BriefMessage")]
@@ -33,7 +35,7 @@ public class BriefMessage
     {
         _logger.LogInformation("C# ServiceBus queue trigger function processed message: {msg}", msg.Message);
         var date = DateOnly.FromDateTime(DateTime.UtcNow).ToString(BriefTelegramMessage.DATE_UTC_FORMAT);
-        var tokensCount = CalculateTokens(msg.Message);
+        var tokensCount = _tokenCounter.Count(msg.Message);
         var briefMsg = new BriefTelegramMessage
         {
             Id = Guid.NewGuid(),
@@ -52,7 +54,7 @@ public class BriefMessage
         else
         {
             var gpt = await AskChatGptForBriefMessage(msg);
-            var gptTokensCount = CalculateTokens(gpt);
+            var gptTokensCount = _tokenCounter.Count(gpt);
             // if gpt version is longer keep original version
             briefMsg.Message = gptTokensCount >= tokensCount
                 ? msg.Message
@@ -60,12 +62,6 @@ public class BriefMessage
         }
 
         return briefMsg;
-    }
-
-    private static int CalculateTokens(string msg)
-    {
-        // OpenAI.GPT3.Tokenizer.GPT3.TokenizerGpt3.TokenCount couldn't count Cyrillic at the moment.
-        return msg.Count(char.IsWhiteSpace) + 1;
     }
 
     private async Task<string> AskChatGptForBriefMessage(QueueTelegramMessage msg)

@@ -57,6 +57,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<BriefTelegramMessageRepository>();
         services.AddScoped<PollingUpdateHandler>();
         services.AddScoped<ReceiverService>();
+        services.AddScoped<TokenCounter>();
         services.AddScoped<UpdateHandler>();
         services.AddHostedService<PollingService>();
     })

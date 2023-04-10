@@ -26,19 +26,22 @@ public class UpdateHandler
     private readonly IOpenAIService _openAiService;
     private readonly ServiceBusClient _serviceBus;
     private readonly BriefTelegramMessageRepository _history;
+    private readonly TokenCounter _tokenCounter;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
         ILogger<UpdateHandler> logger,
         IOpenAIService openAiService,
         ServiceBusClient serviceBus,
-        BriefTelegramMessageRepository history)
+        BriefTelegramMessageRepository history,
+        TokenCounter tokenCounter)
     {
         _botClient = botClient;
         _logger = logger;
         _openAiService = openAiService;
         _serviceBus = serviceBus;
         _history = history;
+        _tokenCounter = tokenCounter;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -128,7 +131,7 @@ public class UpdateHandler
     {
         _logger.LogInformation("Sending {Message} from {User}", message, user);
 
-        var gptMessage = new ConversationHistory(_history, $"{user}: {message}", _logger);
+        var gptMessage = new ConversationHistory(_history, $"{user}: {message}", _logger, _tokenCounter);
         var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
             new ChatCompletionCreateRequest
             {
@@ -143,7 +146,7 @@ public class UpdateHandler
         }
         else
         {
-            _logger.LogError("ChatGPT error: {@error}", new { completionResult.Error?.Type, completionResult.Error?.Message } );
+            _logger.LogError("ChatGPT error: {@error}", new { completionResult.Error?.Type, completionResult.Error?.Message });
             return "ChatGPT request wasn't successful";
         }
     }

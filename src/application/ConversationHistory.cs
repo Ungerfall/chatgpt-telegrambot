@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using OpenAI.GPT3.ObjectModels.RequestModels;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Database;
@@ -10,17 +9,23 @@ namespace Ungerfall.ChatGpt.TelegramBot;
 public class ConversationHistory
 {
     private const string BotUser = "chatgpt_ungerfall_bot";
-    private const int MaxTokens = 4096;
+    private const int MaxTokens = 4096 - 256;
 
     private readonly BriefTelegramMessageRepository _history;
     private readonly string _message;
     private readonly ILogger _logger;
+    private readonly TokenCounter _tokenCounter;
 
-    public ConversationHistory(BriefTelegramMessageRepository history, string message, ILogger logger)
+    public ConversationHistory(
+        BriefTelegramMessageRepository history,
+        string message,
+        ILogger logger,
+        TokenCounter tokenCounter)
     {
         _history = history;
         _message = message;
         _logger = logger;
+        _tokenCounter = tokenCounter;
     }
 
     public async Task<ChatMessage[]> GetForChatGpt(CancellationToken cancellation)
@@ -29,10 +34,10 @@ public class ConversationHistory
         {
             ChatMessage.FromSystem("You are an AI that provides brief and concise answers.")
         };
-        int tokensSum = CalculateTokens(_message);
+        int tokensSum = _tokenCounter.Count(_message);
         await foreach (var h in _history.GetAllOrderByDateDescending(cancellation))
         {
-            tokensSum += CalculateTokens(h.Message);
+            tokensSum += _tokenCounter.Count(h.Message);
             if (tokensSum >= MaxTokens)
             {
                 break;
@@ -49,11 +54,5 @@ public class ConversationHistory
 
         messages.Add(ChatMessage.FromUser(_message));
         return messages.ToArray();
-    }
-
-    private static int CalculateTokens(string msg)
-    {
-        // OpenAI.GPT3.Tokenizer.GPT3.TokenizerGpt3.TokenCount couldn't count Cyrillic at the moment.
-        return msg.Count(char.IsWhiteSpace) + (msg.Length / 4); // chat GPT said 4 chars are okay for rough estimation
     }
 }
