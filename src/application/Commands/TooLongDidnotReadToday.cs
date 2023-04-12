@@ -19,7 +19,9 @@ public class TooLongDidnotReadToday
     public async Task<Message> Execute(CancellationToken cancellation)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var mb = new ChatMessageBuilder(_tokenCounter);
+        var mb = ChatMessageBuilder.Create()
+            .WithTokenCounter(_tokenCounter)
+            .ForBriefAndConciseSystem();
         await foreach (var h in _history.Get(today, cancellation))
         {
             if (!mb.CanAddMessage)

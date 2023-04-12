@@ -3,22 +3,35 @@ using System.Collections.Generic;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
-public sealed class ChatMessageBuilder
+public sealed class ChatMessageBuilder :
+    // fluent interfaces
+    IChatMessageBuilderTokenCounterState,
+    IChatMessageBuilderSystemRoleState,
+    IChatMessageBuilderAddMessagesState
 {
     private const string BotUser = "chatgpt_ungerfall_bot";
     private const double MaxTokens = 4096 * 0.4; // currently tokens count differs to open ai response.
 
-    private readonly TokenCounter _tokenCounter;
-
+    private TokenCounter _tokenCounter = null!;
     private int _tokensSum;
     private List<ChatMessage> _message = new();
 
-    public ChatMessageBuilder(TokenCounter tokenCounter)
+    private ChatMessageBuilder()
     {
-        _tokenCounter = tokenCounter;
     }
 
-    public ChatMessageBuilder ForBriefAndConciseSystem()
+    public static IChatMessageBuilderTokenCounterState Create()
+    {
+        return new ChatMessageBuilder();
+    }
+
+    public IChatMessageBuilderSystemRoleState WithTokenCounter(TokenCounter counter)
+    {
+        _tokenCounter = counter;
+        return this;
+    }
+
+    public IChatMessageBuilderAddMessagesState ForBriefAndConciseSystem()
     {
         const string msg = "You are an AI that provides brief and concise answers.";
         _message = new List<ChatMessage>
@@ -29,7 +42,7 @@ public sealed class ChatMessageBuilder
         return this;
     }
 
-    public ChatMessageBuilder AddMessage(BriefTelegramMessage message, int? index = null)
+    public IChatMessageBuilderAddMessagesState AddMessage(BriefTelegramMessage message, int? index = null)
     {
         if (index == null)
         {
@@ -50,7 +63,7 @@ public sealed class ChatMessageBuilder
         return this;
     }
 
-    public ChatMessageBuilder AddUserMessage(string message)
+    public IChatMessageBuilderAddMessagesState AddUserMessage(string message)
     {
         _message.Add(ChatMessage.FromUser(message));
         return this;

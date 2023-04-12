@@ -22,7 +22,9 @@ public class ConversationHistory
 
     public async Task<(ChatMessage[], int tokens)> GetForChatGpt(CancellationToken cancellation)
     {
-        var mb = new ChatMessageBuilder(_tokenCounter);
+        var mb = ChatMessageBuilder.Create()
+            .WithTokenCounter(_tokenCounter)
+            .ForBriefAndConciseSystem();
         await foreach (var h in _history.GetAllOrderByDateDescending(cancellation))
         {
             if (!mb.CanAddMessage)
