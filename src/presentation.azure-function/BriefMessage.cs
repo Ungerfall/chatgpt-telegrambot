@@ -13,7 +13,7 @@ namespace azure_function;
 public class BriefMessage
 {
     private const int MIN_TOKENS_COUNT = 25;
-    private const int TTL_TWO_DAYS = 2 * 24 * 60 * 60;
+    private const int TTL = 1 * 24 * 60 * 60;
 
     private readonly ILogger _logger;
     private readonly IOpenAIService _openAiService;
@@ -44,7 +44,7 @@ public class BriefMessage
             MessageId = msg.MessageId,
             Date = msg.Date,
             DateUtc = date,
-            TTL = TTL_TWO_DAYS
+            TTL = TTL
         };
 
         if (tokensCount <= MIN_TOKENS_COUNT)
