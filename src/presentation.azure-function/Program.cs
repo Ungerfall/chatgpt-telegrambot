@@ -8,6 +8,7 @@ using OpenAI.GPT3.ObjectModels;
 using System;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot;
+using Ungerfall.ChatGpt.TelegramBot.Commands;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 
 var tgToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.Process)
@@ -51,6 +52,7 @@ var host = new HostBuilder()
         });
         s.AddScoped<BriefTelegramMessageRepository>();
         s.AddScoped<TokenCounter>();
+        s.AddScoped<TooLongDidnotReadToday>();
         s.AddScoped<UpdateHandler>();
     })
     .Build();
