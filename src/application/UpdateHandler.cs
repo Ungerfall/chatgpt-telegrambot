@@ -101,19 +101,17 @@ public class UpdateHandler
             chatId: message.Chat.Id,
             ChatAction.Typing,
             cancellationToken: cancellation);
-        var chatGptResponse = await SendChatGptMessage(message.Text, message.From?.Username ?? "unknown", cancellation);
-        var sentMsg = await _botClient.SendTextMessageAsync(
+        var user = message.From?.Username ?? "unknown";
+        var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, cancellation);
+        chatGptResponse = $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}";
+        return await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: chatGptResponse,
             replyToMessageId: message.MessageId,
             cancellationToken: cancellation);
-        _ = SendMessageToConversationHistory(message, cancellation);
-        _ = SendMessageToConversationHistory(sentMsg, cancellation);
-
-        _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMsg.MessageId);
     }
 
-    public async Task SendMessageToConversationHistory(Message msg, CancellationToken cancellation)
+    private async Task SendMessageToConversationHistory(Message msg, CancellationToken cancellation)
     {
         var q = _serviceBus.CreateSender(QueueTelegramMessage.QUEUE_NAME);
         var qMsg = new ServiceBusMessage(JsonSerializer.Serialize(new QueueTelegramMessage
@@ -127,27 +125,36 @@ public class UpdateHandler
         await q.SendMessageAsync(qMsg, cancellation);
     }
 
-    private async Task<string> SendChatGptMessage(string message, string user, CancellationToken cancellation)
+    private async Task<(string, int)> SendChatGptMessage(string message, string user, CancellationToken cancellation)
     {
         _logger.LogInformation("Sending {Message} from {User}", message, user);
 
-        var gptMessage = new ConversationHistory(_history, $"{user}: {message}", _logger, _tokenCounter);
+        var history = new ConversationHistory(_history, $"{user}: {message}", _tokenCounter);
+        var (gptMessage, tokensCount) = await history.GetForChatGpt(cancellation);
         var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
             new ChatCompletionCreateRequest
             {
-                Messages = await gptMessage.GetForChatGpt(cancellation),
+                Messages = gptMessage,
                 Temperature = 0f,
                 User = user,
             },
             cancellationToken: cancellation);
+        _logger.LogInformation("Tokens: {@tokens}",
+            new
+            {
+                MyTokensCounter = tokensCount,
+                completionResult.Usage.CompletionTokens,
+                completionResult.Usage.PromptTokens,
+                completionResult.Usage.TotalTokens
+            });
         if (completionResult.Successful)
         {
-            return completionResult.Choices[0].Message.Content;
+            return (completionResult.Choices[0].Message.Content, completionResult.Usage.TotalTokens);
         }
         else
         {
             _logger.LogError("ChatGPT error: {@error}", new { completionResult.Error?.Type, completionResult.Error?.Message });
-            return "ChatGPT request wasn't successful";
+            return ("ChatGPT request wasn't successful", completionResult.Usage.TotalTokens);
         }
     }
 

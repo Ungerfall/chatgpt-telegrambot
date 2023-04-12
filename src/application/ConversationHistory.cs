@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using OpenAI.GPT3.ObjectModels.RequestModels;
-using System.Collections.Generic;
+﻿using OpenAI.GPT3.ObjectModels.RequestModels;
 using System.Threading;
 using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Database;
@@ -8,51 +6,34 @@ using Ungerfall.ChatGpt.TelegramBot.Database;
 namespace Ungerfall.ChatGpt.TelegramBot;
 public class ConversationHistory
 {
-    private const string BotUser = "chatgpt_ungerfall_bot";
-    private const int MaxTokens = 4096 - 256;
-
     private readonly BriefTelegramMessageRepository _history;
     private readonly string _message;
-    private readonly ILogger _logger;
     private readonly TokenCounter _tokenCounter;
 
     public ConversationHistory(
         BriefTelegramMessageRepository history,
         string message,
-        ILogger logger,
         TokenCounter tokenCounter)
     {
         _history = history;
         _message = message;
-        _logger = logger;
         _tokenCounter = tokenCounter;
     }
 
-    public async Task<ChatMessage[]> GetForChatGpt(CancellationToken cancellation)
+    public async Task<(ChatMessage[], int tokens)> GetForChatGpt(CancellationToken cancellation)
     {
-        var messages = new List<ChatMessage>
-        {
-            ChatMessage.FromSystem("You are an AI that provides brief and concise answers.")
-        };
-        int tokensSum = _tokenCounter.Count(_message);
+        var mb = new ChatMessageBuilder(_tokenCounter);
         await foreach (var h in _history.GetAllOrderByDateDescending(cancellation))
         {
-            tokensSum += _tokenCounter.Count(h.Message);
-            if (tokensSum >= MaxTokens)
+            if (!mb.CanAddMessage)
             {
                 break;
             }
 
-            messages.Insert(
-                1, // because of descending order of items in history
-                h.User == BotUser
-                    ? ChatMessage.FromAssistant($"{h.Message}")
-                    : ChatMessage.FromUser($"{h.User}: {h.Message}"));
+            mb.AddMessage(h, 1); // because of descending order of items in history
         }
 
-        _logger.LogInformation("Tokens count: {count}", tokensSum);
-
-        messages.Add(ChatMessage.FromUser(_message));
-        return messages.ToArray();
+        mb.AddUserMessage(_message);
+        return (mb.Build(), mb.TokensCount);
     }
 }
