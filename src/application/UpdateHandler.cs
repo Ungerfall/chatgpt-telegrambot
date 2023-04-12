@@ -144,7 +144,7 @@ public class UpdateHandler
         await q.SendMessageAsync(qMsg, cancellation);
     }
 
-    private async Task<(string, int)> SendChatGptMessage(string message, string user, CancellationToken cancellation)
+    private async Task<(string, int?)> SendChatGptMessage(string message, string user, CancellationToken cancellation)
     {
         _logger.LogInformation("Sending {Message} from {User}", message, user);
 
@@ -162,18 +162,18 @@ public class UpdateHandler
             new
             {
                 MyTokensCounter = tokensCount,
-                completionResult.Usage.CompletionTokens,
-                completionResult.Usage.PromptTokens,
-                completionResult.Usage.TotalTokens
+                completionResult.Usage?.CompletionTokens,
+                completionResult.Usage?.PromptTokens,
+                completionResult.Usage?.TotalTokens
             });
         if (completionResult.Successful)
         {
-            return (completionResult.Choices[0].Message.Content, completionResult.Usage.TotalTokens);
+            return (completionResult.Choices[0].Message.Content, completionResult.Usage?.TotalTokens);
         }
         else
         {
             _logger.LogError("ChatGPT error: {@error}", new { completionResult.Error?.Type, completionResult.Error?.Message });
-            return ("ChatGPT request wasn't successful", completionResult.Usage.TotalTokens);
+            return ("ChatGPT request wasn't successful", completionResult.Usage?.TotalTokens);
         }
     }
 
