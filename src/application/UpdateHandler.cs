@@ -11,6 +11,7 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Ungerfall.ChatGpt.TelegramBot.Commands;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.Queue;
 
@@ -27,6 +28,7 @@ public class UpdateHandler
     private readonly ServiceBusClient _serviceBus;
     private readonly BriefTelegramMessageRepository _history;
     private readonly TokenCounter _tokenCounter;
+    private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
@@ -34,7 +36,8 @@ public class UpdateHandler
         IOpenAIService openAiService,
         ServiceBusClient serviceBus,
         BriefTelegramMessageRepository history,
-        TokenCounter tokenCounter)
+        TokenCounter tokenCounter,
+        TooLongDidnotReadToday tooLongDidnotReadCommand)
     {
         _botClient = botClient;
         _logger = logger;
@@ -42,6 +45,7 @@ public class UpdateHandler
         _serviceBus = serviceBus;
         _history = history;
         _tokenCounter = tokenCounter;
+        _tooLongDidnotReadCommand = tooLongDidnotReadCommand;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -97,6 +101,21 @@ public class UpdateHandler
             return;
         }
 
+        var action = messageText.Split(' ')[0] switch
+        {
+            "/tldrtoday" => _tooLongDidnotReadCommand.Execute(cancellation),
+            _ => BotMentionedMessage(message, messageText, cancellation),
+        };
+
+        var sentMsg = await action;
+        _ = SendMessageToConversationHistory(message, cancellation);
+        _ = SendMessageToConversationHistory(sentMsg, cancellation);
+
+        _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMsg.MessageId);
+    }
+
+    private async Task<Message> BotMentionedMessage(Message message, string messageText, CancellationToken cancellation)
+    {
         await _botClient.SendChatActionAsync(
             chatId: message.Chat.Id,
             ChatAction.Typing,
