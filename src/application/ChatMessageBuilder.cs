@@ -33,7 +33,8 @@ public sealed class ChatMessageBuilder :
 
     public IChatMessageBuilderAddMessagesState ForBriefAndConciseSystem()
     {
-        const string msg = "You are an AI that provides brief and concise answers.";
+        const string msg = "Ты находишься в чате. Участники чата: Leonid, Фатих, Anton, Ruslan, Виталик и Александр."
+        + "Я отправляю сообщения в формате: 'имя пользователя': 'сообщение'";
         _message = new List<ChatMessage>
         {
             ChatMessage.FromSystem(msg),
