@@ -12,7 +12,7 @@ namespace azure_function;
 
 public class BriefMessage
 {
-    private const int MIN_TOKENS_COUNT = 25;
+    private const int MIN_TOKENS_COUNT = 100;
     private const int TTL = 1 * 24 * 60 * 60;
 
     private readonly ILogger _logger;
