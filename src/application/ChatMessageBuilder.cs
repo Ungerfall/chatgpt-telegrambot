@@ -61,12 +61,14 @@ public sealed class ChatMessageBuilder :
                     : ChatMessage.FromUser($"{message.User}: {message.Message}"));
         }
 
+        _tokensSum += _tokenCounter.Count(message.Message);
         return this;
     }
 
     public IChatMessageBuilderAddMessagesState AddUserMessage(string message)
     {
         _message.Add(ChatMessage.FromUser(message));
+        _tokensSum += _tokenCounter.Count(message);
         return this;
     }
 
