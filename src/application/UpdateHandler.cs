@@ -92,7 +92,7 @@ public class UpdateHandler
             return;
         }
 
-        var action = messageText.Split(' ')[0] switch
+        var action = messageText.Split('@')[0] switch
         {
             "/tldrtoday" => _tooLongDidnotReadCommand.Execute(message, cancellation),
             _ => OnMessageReceived(message, messageText, cancellation),
