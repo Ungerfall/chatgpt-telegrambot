@@ -22,6 +22,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0-preview.2" />
     <PackageReference Include="Betalgo.OpenAI.GPT3" Version="6.8.3" />
+    <PackageReference Include="Unidecode.NET" Version="2.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\application\Ungerfall.ChatGpt.TelegramBot.csproj" />

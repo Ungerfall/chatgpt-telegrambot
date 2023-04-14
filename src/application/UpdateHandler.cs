@@ -11,6 +11,7 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Ungerfall.ChatGpt.TelegramBot.Commands;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.Queue;
 
@@ -26,19 +27,25 @@ public class UpdateHandler
     private readonly IOpenAIService _openAiService;
     private readonly ServiceBusClient _serviceBus;
     private readonly BriefTelegramMessageRepository _history;
+    private readonly TokenCounter _tokenCounter;
+    private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
         ILogger<UpdateHandler> logger,
         IOpenAIService openAiService,
         ServiceBusClient serviceBus,
-        BriefTelegramMessageRepository history)
+        BriefTelegramMessageRepository history,
+        TokenCounter tokenCounter,
+        TooLongDidnotReadToday tooLongDidnotReadCommand)
     {
         _botClient = botClient;
         _logger = logger;
         _openAiService = openAiService;
         _serviceBus = serviceBus;
         _history = history;
+        _tokenCounter = tokenCounter;
+        _tooLongDidnotReadCommand = tooLongDidnotReadCommand;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -85,20 +92,32 @@ public class UpdateHandler
             return;
         }
 
+        var action = messageText.Split('@')[0] switch
+        {
+            "/tldrtoday" => _tooLongDidnotReadCommand.Execute(message, cancellation),
+            _ => OnMessageReceived(message, messageText, cancellation),
+        };
+        await action;
+    }
+
+    private async Task<Message> OnMessageReceived(Message message, string messageText, CancellationToken cancellation)
+    {
         bool containMention = message.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
         bool isBotMentioned = containMention && (message.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false);
         if (!isBotMentioned)
         {
             _logger.LogInformation("The message does not contain mention of bot.");
             _ = SendMessageToConversationHistory(message, cancellation);
-            return;
+            return message;
         }
 
         await _botClient.SendChatActionAsync(
             chatId: message.Chat.Id,
             ChatAction.Typing,
             cancellationToken: cancellation);
-        var chatGptResponse = await SendChatGptMessage(message.Text, message.From?.Username ?? "unknown", cancellation);
+        var user = message.From?.Username ?? "unknown";
+        var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, cancellation);
+        chatGptResponse = $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}";
         var sentMsg = await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: chatGptResponse,
@@ -106,16 +125,16 @@ public class UpdateHandler
             cancellationToken: cancellation);
         _ = SendMessageToConversationHistory(message, cancellation);
         _ = SendMessageToConversationHistory(sentMsg, cancellation);
-
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMsg.MessageId);
+        return sentMsg;
     }
 
-    public async Task SendMessageToConversationHistory(Message msg, CancellationToken cancellation)
+    private async Task SendMessageToConversationHistory(Message msg, CancellationToken cancellation)
     {
         var q = _serviceBus.CreateSender(QueueTelegramMessage.QUEUE_NAME);
         var qMsg = new ServiceBusMessage(JsonSerializer.Serialize(new QueueTelegramMessage
         {
-            User = msg.From?.Username ?? "unknown",
+            User = msg.From?.FirstName ?? msg.From?.Username ?? "unknown",
             UserId = msg.From?.Id ?? default,
             Message = msg.Text!, // null check upwards
             MessageId = msg.MessageId,
@@ -124,26 +143,36 @@ public class UpdateHandler
         await q.SendMessageAsync(qMsg, cancellation);
     }
 
-    private async Task<string> SendChatGptMessage(string message, string user, CancellationToken cancellation)
+    private async Task<(string, int?)> SendChatGptMessage(string message, string user, CancellationToken cancellation)
     {
         _logger.LogInformation("Sending {Message} from {User}", message, user);
 
-        var gptMessage = new ConversationHistory(_history, $"{user}: {message}");
+        var history = new ConversationHistory(_history, $"{user}: {message}", _tokenCounter);
+        var (gptMessage, tokensCount) = await history.GetForChatGpt(cancellation);
         var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
             new ChatCompletionCreateRequest
             {
-                Messages = await gptMessage.GetForChatGpt(cancellation),
+                Messages = gptMessage,
                 Temperature = 0f,
                 User = user,
             },
             cancellationToken: cancellation);
+        _logger.LogInformation("Tokens: {@tokens}",
+            new
+            {
+                MyTokensCounter = tokensCount,
+                completionResult.Usage?.CompletionTokens,
+                completionResult.Usage?.PromptTokens,
+                completionResult.Usage?.TotalTokens
+            });
         if (completionResult.Successful)
         {
-            return completionResult.Choices[0].Message.Content;
+            return (completionResult.Choices[0].Message.Content, completionResult.Usage?.TotalTokens);
         }
         else
         {
-            return "ChatGPT request wasn't successful";
+            _logger.LogError("ChatGPT error: {@error}", new { completionResult.Error?.Type, completionResult.Error?.Message });
+            return ("ChatGPT request wasn't successful", completionResult.Usage?.TotalTokens);
         }
     }
 

@@ -1,6 +1,4 @@
 ﻿using OpenAI.GPT3.ObjectModels.RequestModels;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Database;
@@ -8,47 +6,36 @@ using Ungerfall.ChatGpt.TelegramBot.Database;
 namespace Ungerfall.ChatGpt.TelegramBot;
 public class ConversationHistory
 {
-    private const string BotUser = "chatgpt_ungerfall_bot";
-    private const int MaxTokens = 4096;
-
     private readonly BriefTelegramMessageRepository _history;
     private readonly string _message;
+    private readonly TokenCounter _tokenCounter;
 
-    public ConversationHistory(BriefTelegramMessageRepository history, string message)
+    public ConversationHistory(
+        BriefTelegramMessageRepository history,
+        string message,
+        TokenCounter tokenCounter)
     {
         _history = history;
         _message = message;
+        _tokenCounter = tokenCounter;
     }
 
-    public async Task<ChatMessage[]> GetForChatGpt(CancellationToken cancellation)
+    public async Task<(ChatMessage[], int tokens)> GetForChatGpt(CancellationToken cancellation)
     {
-        var messages = new List<ChatMessage>
-        {
-            ChatMessage.FromSystem("You are an AI that provides brief and concise answers.")
-        };
-        int tokensSum = 0;
+        var mb = ChatMessageBuilder.Create()
+            .WithTokenCounter(_tokenCounter)
+            .ForBriefAndConciseSystem();
         await foreach (var h in _history.GetAllOrderByDateDescending(cancellation))
         {
-            tokensSum += CalculateTokens(h.Message);
-            if (tokensSum >= MaxTokens)
+            if (!mb.CanAddMessage)
             {
                 break;
             }
 
-            messages.Insert(
-                1, // because of descending order of items in history
-                h.User == BotUser
-                    ? ChatMessage.FromAssistant($"{h.User}: {h.Message}")
-                    : ChatMessage.FromUser($"{h.User}: {h.Message}"));
+            mb.AddMessage(h, 1); // because of descending order of items in history
         }
 
-        messages.Add(ChatMessage.FromUser(_message));
-        return messages.ToArray();
-    }
-
-    private static int CalculateTokens(string msg)
-    {
-        // OpenAI.GPT3.Tokenizer.GPT3.TokenizerGpt3.TokenCount couldn't count Cyrillic at the moment.
-        return msg.Count(char.IsWhiteSpace) + (msg.Length / 8); // why 8 though ???
+        mb.AddUserMessage(_message);
+        return (mb.Build(), mb.TokensCount);
     }
 }
