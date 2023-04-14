@@ -92,30 +92,25 @@ public class UpdateHandler
             return;
         }
 
+        var action = messageText.Split(' ')[0] switch
+        {
+            "/tldrtoday" => _tooLongDidnotReadCommand.Execute(message, cancellation),
+            _ => OnMessageReceived(message, messageText, cancellation),
+        };
+        await action;
+    }
+
+    private async Task<Message> OnMessageReceived(Message message, string messageText, CancellationToken cancellation)
+    {
         bool containMention = message.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
         bool isBotMentioned = containMention && (message.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false);
         if (!isBotMentioned)
         {
             _logger.LogInformation("The message does not contain mention of bot.");
             _ = SendMessageToConversationHistory(message, cancellation);
-            return;
+            return message;
         }
 
-        var action = messageText.Split(' ')[0] switch
-        {
-            "/tldrtoday" => _tooLongDidnotReadCommand.Execute(cancellation),
-            _ => BotMentionedMessage(message, messageText, cancellation),
-        };
-
-        var sentMsg = await action;
-        _ = SendMessageToConversationHistory(message, cancellation);
-        _ = SendMessageToConversationHistory(sentMsg, cancellation);
-
-        _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMsg.MessageId);
-    }
-
-    private async Task<Message> BotMentionedMessage(Message message, string messageText, CancellationToken cancellation)
-    {
         await _botClient.SendChatActionAsync(
             chatId: message.Chat.Id,
             ChatAction.Typing,
@@ -123,11 +118,15 @@ public class UpdateHandler
         var user = message.From?.Username ?? "unknown";
         var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, cancellation);
         chatGptResponse = $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}";
-        return await _botClient.SendTextMessageAsync(
+        var sentMsg = await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: chatGptResponse,
             replyToMessageId: message.MessageId,
             cancellationToken: cancellation);
+        _ = SendMessageToConversationHistory(message, cancellation);
+        _ = SendMessageToConversationHistory(sentMsg, cancellation);
+        _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMsg.MessageId);
+        return sentMsg;
     }
 
     private async Task SendMessageToConversationHistory(Message msg, CancellationToken cancellation)
