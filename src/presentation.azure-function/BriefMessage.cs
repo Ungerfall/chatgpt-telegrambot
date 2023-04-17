@@ -4,11 +4,10 @@ using OpenAI.GPT3.Interfaces;
 using OpenAI.GPT3.ObjectModels.RequestModels;
 using System;
 using System.Threading.Tasks;
-using Ungerfall.ChatGpt.TelegramBot;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.Queue;
 
-namespace azure_function;
+namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 
 public class BriefMessage
 {
@@ -71,8 +70,8 @@ public class BriefMessage
             {
                 Messages = new[]
                 {
-                    ChatMessage.FromSystem("Вы — искусственный интеллект, дающий краткие и лаконичные ответы."),
-                    ChatMessage.FromUser("Сделай коротко и лаконично: " + msg.Message),
+                    ChatMessage.FromSystem("Вы — искусственный интеллект, который уменьшает количество токенов истории чата Телеграм."),
+                    ChatMessage.FromUser("Сделай коротко: " + msg.Message),
                 },
                 Temperature = 0f,
                 User = msg.User,
