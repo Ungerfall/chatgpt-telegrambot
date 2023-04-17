@@ -11,6 +11,7 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.Queue;
@@ -19,7 +20,6 @@ namespace Ungerfall.ChatGpt.TelegramBot;
 
 public class UpdateHandler
 {
-    private const long OurChatGroupId = -1001034436662;
     private const string BotUsername = "@chatgpt_ungerfall_bot";
 
     private readonly ITelegramBotClient _botClient;
@@ -27,8 +27,9 @@ public class UpdateHandler
     private readonly IOpenAIService _openAiService;
     private readonly ServiceBusClient _serviceBus;
     private readonly BriefTelegramMessageRepository _history;
-    private readonly TokenCounter _tokenCounter;
+    private readonly ITokenCounter _tokenCounter;
     private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
+    private readonly IWhitelist _whitelist;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
@@ -36,8 +37,9 @@ public class UpdateHandler
         IOpenAIService openAiService,
         ServiceBusClient serviceBus,
         BriefTelegramMessageRepository history,
-        TokenCounter tokenCounter,
-        TooLongDidnotReadToday tooLongDidnotReadCommand)
+        ITokenCounter tokenCounter,
+        TooLongDidnotReadToday tooLongDidnotReadCommand,
+        IWhitelist whitelist)
     {
         _botClient = botClient;
         _logger = logger;
@@ -46,6 +48,7 @@ public class UpdateHandler
         _history = history;
         _tokenCounter = tokenCounter;
         _tooLongDidnotReadCommand = tooLongDidnotReadCommand;
+        _whitelist = whitelist;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -82,7 +85,7 @@ public class UpdateHandler
         if (message.Text is not { } messageText)
             return;
 
-        if (message.Chat.Id != OurChatGroupId)
+        if (!_whitelist.IsGroupAllowedToUseBot(message.Chat.Id))
         {
             await _botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
@@ -105,6 +108,7 @@ public class UpdateHandler
         bool containMention = message.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
         bool isBotMentioned = containMention && (message.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false);
         var user = message.From?.FirstName ?? message.From?.Username ?? "unknown";
+        var chatId = message.Chat.Id;
         if (!isBotMentioned)
         {
             _logger.LogInformation("The message does not contain mention of bot.");
@@ -113,13 +117,13 @@ public class UpdateHandler
         }
 
         await _botClient.SendChatActionAsync(
-            chatId: message.Chat.Id,
+            chatId: chatId,
             ChatAction.Typing,
             cancellationToken: cancellation);
-        var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, cancellation);
+        var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, chatId, cancellation);
         chatGptResponse = $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}";
         var sentMsg = await _botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
+            chatId: chatId,
             text: chatGptResponse,
             replyToMessageId: message.MessageId,
             cancellationToken: cancellation);
@@ -134,6 +138,7 @@ public class UpdateHandler
         var q = _serviceBus.CreateSender(QueueTelegramMessage.QUEUE_NAME);
         var qMsg = new ServiceBusMessage(JsonSerializer.Serialize(new QueueTelegramMessage
         {
+            ChatId = msg.Chat.Id,
             User = user,
             UserId = msg.From?.Id ?? default,
             Message = msg.Text!, // null check upwards
@@ -143,12 +148,12 @@ public class UpdateHandler
         await q.SendMessageAsync(qMsg, cancellation);
     }
 
-    private async Task<(string, int?)> SendChatGptMessage(string message, string user, CancellationToken cancellation)
+    private async Task<(string, int?)> SendChatGptMessage(string message, string user, long chatId, CancellationToken cancellation)
     {
         _logger.LogInformation("Sending {Message} from {User}", message, user);
 
-        var history = new ConversationHistory(_history, $"{user}: {message}", _tokenCounter);
-        var (gptMessage, tokensCount) = await history.GetForChatGpt(cancellation);
+        var history = new ConversationHistory(_history, $"{user}: {message}", _tokenCounter, _whitelist);
+        var (gptMessage, tokensCount) = await history.GetForChatGpt(chatId, cancellation);
         var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
             new ChatCompletionCreateRequest
             {

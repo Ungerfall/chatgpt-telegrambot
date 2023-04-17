@@ -7,6 +7,9 @@ public class QueueTelegramMessage
 {
     public const string QUEUE_NAME = "tgbot-messages";
 
+    [JsonPropertyName("chatId")]
+    public long ChatId { get; init; }
+
     [JsonPropertyName("user")]
     public string User { get; init; } = null!;
 

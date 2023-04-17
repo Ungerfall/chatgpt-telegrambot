@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Commands;
@@ -14,23 +15,26 @@ public class TooLongDidnotReadToday
 {
     private const string AskForTLDR = "Напиши TL;DR всей истории переписки. Выведи статистику по пользователям. Избегай обобщений.";
     private readonly BriefTelegramMessageRepository _history;
-    private readonly TokenCounter _tokenCounter;
+    private readonly ITokenCounter _tokenCounter;
     private readonly ITelegramBotClient _botClient;
     private readonly IOpenAIService _openAiService;
     private readonly ILogger<TooLongDidnotReadToday> _logger;
+    private readonly IWhitelist _whitelist;
 
     public TooLongDidnotReadToday(
         BriefTelegramMessageRepository history,
-        TokenCounter tokenCounter,
+        ITokenCounter tokenCounter,
         IOpenAIService openAiService,
         ILogger<TooLongDidnotReadToday> logger,
-        ITelegramBotClient botClient)
+        ITelegramBotClient botClient,
+        IWhitelist whitelist)
     {
         _history = history;
         _tokenCounter = tokenCounter;
         _openAiService = openAiService;
         _logger = logger;
         _botClient = botClient;
+        _whitelist = whitelist;
     }
 
     public async Task<Message> Execute(Message message, CancellationToken cancellation)
@@ -55,8 +59,8 @@ public class TooLongDidnotReadToday
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var mb = ChatMessageBuilder.Create()
             .WithTokenCounter(_tokenCounter)
-            .ForBriefAndConciseSystem();
-        await foreach (var h in _history.Get(today, cancellation))
+            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(message.Chat.Id));
+        await foreach (var h in _history.Get(message.Chat.Id, today, cancellation))
         {
             if (!mb.CanAddMessage)
             {

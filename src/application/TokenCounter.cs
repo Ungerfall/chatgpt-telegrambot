@@ -1,5 +1,7 @@
-﻿namespace Ungerfall.ChatGpt.TelegramBot;
-public sealed class TokenCounter
+﻿using Ungerfall.ChatGpt.TelegramBot.Abstractions;
+
+namespace Ungerfall.ChatGpt.TelegramBot;
+public sealed class TokenCounter : ITokenCounter
 {
     public int Count(string text)
     {

@@ -10,6 +10,9 @@ public class BriefTelegramMessage
     [JsonPropertyName("id")]
     public Guid Id { get; init; }
 
+    [JsonPropertyName("chatId")]
+    public long ChatId { get; set; }
+
     [JsonPropertyName("user")]
     public string User { get; init; } = null!;
 

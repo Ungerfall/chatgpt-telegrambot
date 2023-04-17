@@ -8,6 +8,7 @@ using OpenAI.GPT3.ObjectModels;
 using System;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot;
+using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.Worker;
@@ -58,7 +59,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<BriefTelegramMessageRepository>();
         services.AddScoped<PollingUpdateHandler>();
         services.AddScoped<ReceiverService>();
-        services.AddScoped<TokenCounter>();
+        services.AddScoped<ITokenCounter, TokenCounter>();
+        services.AddScoped<IWhitelist, Whitelist>();
         services.AddScoped<TooLongDidnotReadToday>();
         services.AddScoped<UpdateHandler>();
         services.AddHostedService<PollingService>();
