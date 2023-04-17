@@ -104,10 +104,11 @@ public class UpdateHandler
     {
         bool containMention = message.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
         bool isBotMentioned = containMention && (message.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false);
+        var user = message.From?.FirstName ?? message.From?.Username ?? "unknown";
         if (!isBotMentioned)
         {
             _logger.LogInformation("The message does not contain mention of bot.");
-            _ = SendMessageToConversationHistory(message, cancellation);
+            _ = SendMessageToConversationHistory(message, user, cancellation);
             return message;
         }
 
@@ -115,7 +116,6 @@ public class UpdateHandler
             chatId: message.Chat.Id,
             ChatAction.Typing,
             cancellationToken: cancellation);
-        var user = message.From?.Username ?? "unknown";
         var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, cancellation);
         chatGptResponse = $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}";
         var sentMsg = await _botClient.SendTextMessageAsync(
@@ -123,18 +123,18 @@ public class UpdateHandler
             text: chatGptResponse,
             replyToMessageId: message.MessageId,
             cancellationToken: cancellation);
-        _ = SendMessageToConversationHistory(message, cancellation);
-        _ = SendMessageToConversationHistory(sentMsg, cancellation);
+        _ = SendMessageToConversationHistory(message, user, cancellation);
+        _ = SendMessageToConversationHistory(sentMsg, user, cancellation);
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMsg.MessageId);
         return sentMsg;
     }
 
-    private async Task SendMessageToConversationHistory(Message msg, CancellationToken cancellation)
+    private async Task SendMessageToConversationHistory(Message msg, string user, CancellationToken cancellation)
     {
         var q = _serviceBus.CreateSender(QueueTelegramMessage.QUEUE_NAME);
         var qMsg = new ServiceBusMessage(JsonSerializer.Serialize(new QueueTelegramMessage
         {
-            User = msg.From?.FirstName ?? msg.From?.Username ?? "unknown",
+            User = user,
             UserId = msg.From?.Id ?? default,
             Message = msg.Text!, // null check upwards
             MessageId = msg.MessageId,

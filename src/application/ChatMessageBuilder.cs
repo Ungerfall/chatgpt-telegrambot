@@ -34,7 +34,8 @@ public sealed class ChatMessageBuilder :
     public IChatMessageBuilderAddMessagesState ForBriefAndConciseSystem()
     {
         const string msg = "Ты находишься в чате. Участники чата: Leonid, Фатих, Anton, Ruslan, Виталик и Александр."
-        + "Я отправляю сообщения в формате: 'имя пользователя': 'сообщение'";
+        + "Я отправляю сообщения в формате: 'имя пользователя': 'сообщение'."
+        + "Всегда приводи конкретные примеры, подкрепляющие твои слова. Добавляй деталей, но отвечай кратко, отвечай как специалист в обсуждаемой теме.";
         _message = new List<ChatMessage>
         {
             ChatMessage.FromSystem(msg),

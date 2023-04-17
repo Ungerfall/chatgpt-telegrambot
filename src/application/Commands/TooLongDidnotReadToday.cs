@@ -12,7 +12,7 @@ using Ungerfall.ChatGpt.TelegramBot.Database;
 namespace Ungerfall.ChatGpt.TelegramBot.Commands;
 public class TooLongDidnotReadToday
 {
-    private const string AskForTLDR = "Напиши TL;DR всей истории переписки. Выведи статистику по пользователям";
+    private const string AskForTLDR = "Напиши TL;DR всей истории переписки. Выведи статистику по пользователям. Избегай обобщений.";
     private readonly BriefTelegramMessageRepository _history;
     private readonly TokenCounter _tokenCounter;
     private readonly ITelegramBotClient _botClient;
