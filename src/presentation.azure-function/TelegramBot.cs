@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
@@ -13,21 +12,21 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 public class TelegramBot
 {
     private readonly ILogger _logger;
-    private readonly UpdateHandler _updateService;
 
-    public TelegramBot(ILoggerFactory loggerFactory, UpdateHandler updateService)
+    public TelegramBot(ILoggerFactory loggerFactory)
     {
         _logger = loggerFactory.CreateLogger<TelegramBot>();
-        _updateService = updateService;
     }
 
     [Function("TelegramBot")]
-    public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req,
-        CancellationToken cancellation)
+    public async Task<TelegramBotOutput> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req)
     {
         _logger.LogInformation("C# HTTP trigger function processed a request.");
-        var response = req.CreateResponse(HttpStatusCode.OK);
-        response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+        var output = new TelegramBotOutput
+        {
+            HttpResponseData = req.CreateResponse(HttpStatusCode.OK),
+        };
+        output.HttpResponseData.Headers.Add("Content-Type", "text/plain; charset=utf-8");
         try
         {
             var body = await req.ReadAsStringAsync() ?? throw new ArgumentNullException(nameof(req));
@@ -35,16 +34,24 @@ public class TelegramBot
             if (update is null)
             {
                 _logger.LogWarning("Unable to deserialize Update object.");
-                return response;
+                return output;
             }
 
-            await _updateService.Handle(update, cancellation);
+            output.Update = update;
         }
         catch (Exception e)
         {
             _logger.LogError("Exception: {exception}", e.Message);
         }
 
-        return response;
+        return output;
     }
+}
+
+public class TelegramBotOutput
+{
+    public HttpResponseData HttpResponseData { get; set; } = null!;
+
+    [ServiceBusOutput(Const.TGBOT_UPDATES, Connection = "ServiceBusConnection")]
+    public Update? Update { get; set; }
 }
