@@ -4,6 +4,7 @@ using OpenAI.GPT3.Interfaces;
 using OpenAI.GPT3.ObjectModels.RequestModels;
 using System;
 using System.Threading.Tasks;
+using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.Queue;
 
@@ -16,9 +17,9 @@ public class BriefMessage
 
     private readonly ILogger _logger;
     private readonly IOpenAIService _openAiService;
-    private readonly TokenCounter _tokenCounter;
+    private readonly ITokenCounter _tokenCounter;
 
-    public BriefMessage(ILogger<BriefMessage> logger, IOpenAIService openAiService, TokenCounter tokenCounter)
+    public BriefMessage(ILogger<BriefMessage> logger, IOpenAIService openAiService, ITokenCounter tokenCounter)
     {
         _logger = logger;
         _openAiService = openAiService;
@@ -38,6 +39,7 @@ public class BriefMessage
         var briefMsg = new BriefTelegramMessage
         {
             Id = Guid.NewGuid(),
+            ChatId = msg.ChatId,
             User = msg.User,
             UserId = msg.UserId,
             MessageId = msg.MessageId,

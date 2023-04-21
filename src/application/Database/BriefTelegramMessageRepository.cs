@@ -23,16 +23,17 @@ public class BriefTelegramMessageRepository
         _logger = logger;
     }
 
-    public async IAsyncEnumerable<BriefTelegramMessage> Get(DateOnly dateUtc, [EnumeratorCancellation] CancellationToken cancellation)
+    public async IAsyncEnumerable<BriefTelegramMessage> Get(long chatId, DateOnly dateUtc, [EnumeratorCancellation] CancellationToken cancellation)
     {
         var container = _cosmos.GetContainer(_options.DatabaseId, _options.BriefMessagesContainerId);
-        var query = new QueryDefinition("SELECT * FROM c ORDER BY c.date DESC");
+        var query = new QueryDefinition("SELECT * FROM c WHERE c.dateUtc = @dateUtc ORDER BY c.date DESC")
+            .WithParameter("@dateUtc", dateUtc.ToString(BriefTelegramMessage.DATE_UTC_FORMAT));
         using var it = container.GetItemQueryIterator<BriefTelegramMessage>(
             query,
             requestOptions: new QueryRequestOptions
             {
                 MaxConcurrency = 1,
-                PartitionKey = new PartitionKey(dateUtc.ToString(BriefTelegramMessage.DATE_UTC_FORMAT)),
+                PartitionKey = new PartitionKey(chatId),
             });
         while (it.HasMoreResults)
         {
@@ -50,13 +51,17 @@ public class BriefTelegramMessageRepository
         }
     }
 
-    public async IAsyncEnumerable<BriefTelegramMessage> GetAllOrderByDateDescending([EnumeratorCancellation] CancellationToken cancellation)
+    public async IAsyncEnumerable<BriefTelegramMessage> GetAllOrderByDateDescending(long chatId, [EnumeratorCancellation] CancellationToken cancellation)
     {
         var container = _cosmos.GetContainer(_options.DatabaseId, _options.BriefMessagesContainerId);
         var query = new QueryDefinition("SELECT * FROM c ORDER BY c.date DESC");
         using var it = container.GetItemQueryIterator<BriefTelegramMessage>(
             query,
-            requestOptions: new QueryRequestOptions { MaxConcurrency = 1, });
+            requestOptions: new QueryRequestOptions
+            {
+                MaxConcurrency = 1,
+                PartitionKey = new PartitionKey(chatId),
+            });
         while (it.HasMoreResults)
         {
             FeedResponse<BriefTelegramMessage> response = await it.ReadNextAsync(cancellation);

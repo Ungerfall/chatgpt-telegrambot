@@ -1,5 +1,6 @@
 ﻿using OpenAI.GPT3.ObjectModels.RequestModels;
 using System.Collections.Generic;
+using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
@@ -12,7 +13,7 @@ public sealed class ChatMessageBuilder :
     private const string BotUser = "chatgpt_ungerfall_bot";
     private const double MaxTokens = 4096 * 0.4; // currently tokens count differs to open ai response.
 
-    private TokenCounter _tokenCounter = null!;
+    private ITokenCounter _tokenCounter = null!;
     private int _tokensSum;
     private List<ChatMessage> _message = new();
 
@@ -25,17 +26,14 @@ public sealed class ChatMessageBuilder :
         return new ChatMessageBuilder();
     }
 
-    public IChatMessageBuilderSystemRoleState WithTokenCounter(TokenCounter counter)
+    public IChatMessageBuilderSystemRoleState WithTokenCounter(ITokenCounter counter)
     {
         _tokenCounter = counter;
         return this;
     }
 
-    public IChatMessageBuilderAddMessagesState ForBriefAndConciseSystem()
+    public IChatMessageBuilderAddMessagesState WithSystemRoleMessage(string msg)
     {
-        const string msg = "Ты находишься в чате. Участники чата: Leonid, Фатих, Anton, Ruslan, Виталик и Александр."
-        + "Я отправляю сообщения в формате: 'имя пользователя': 'сообщение'."
-        + "Всегда приводи конкретные примеры, подкрепляющие твои слова. Добавляй деталей, но отвечай кратко, отвечай как специалист в обсуждаемой теме.";
         _message = new List<ChatMessage>
         {
             ChatMessage.FromSystem(msg),
