@@ -35,8 +35,7 @@ public class BriefMessage
     {
         _logger.LogInformation("C# ServiceBus queue trigger function processed message: {msg}", msg.Message);
         var date = DateOnly.FromDateTime(DateTime.UtcNow).ToString(BriefTelegramMessage.DATE_UTC_FORMAT);
-        var tokensCount = _tokenCounter.Count(msg.Message);
-        var briefMsg = new BriefTelegramMessage
+        return new BriefTelegramMessage
         {
             Id = Guid.NewGuid(),
             ChatId = msg.ChatId,
@@ -47,7 +46,8 @@ public class BriefMessage
             DateUtc = date,
             TTL = TTL
         };
-
+        /*
+        var tokensCount = _tokenCounter.Count(msg.Message);
         if (tokensCount <= MIN_TOKENS_COUNT)
         {
             briefMsg.Message = msg.Message;
@@ -63,6 +63,7 @@ public class BriefMessage
         }
 
         return briefMsg;
+        */
     }
 
     private async Task<string> AskChatGptForBriefMessage(QueueTelegramMessage msg)
