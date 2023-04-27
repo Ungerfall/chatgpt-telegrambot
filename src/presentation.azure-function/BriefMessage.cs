@@ -42,6 +42,7 @@ public class BriefMessage
             User = msg.User,
             UserId = msg.UserId,
             MessageId = msg.MessageId,
+            Message = msg.Message,
             Date = msg.Date,
             DateUtc = date,
             TTL = TTL
