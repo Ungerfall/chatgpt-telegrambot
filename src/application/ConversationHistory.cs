@@ -7,13 +7,13 @@ using Ungerfall.ChatGpt.TelegramBot.Database;
 namespace Ungerfall.ChatGpt.TelegramBot;
 public class ConversationHistory
 {
-    private readonly BriefTelegramMessageRepository _history;
+    private readonly TelegramMessageRepository _history;
     private readonly string _message;
     private readonly ITokenCounter _tokenCounter;
     private readonly IWhitelist _whitelist;
 
     public ConversationHistory(
-        BriefTelegramMessageRepository history,
+        TelegramMessageRepository history,
         string message,
         ITokenCounter tokenCounter,
         IWhitelist whitelist)

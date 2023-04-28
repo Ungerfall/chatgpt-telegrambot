@@ -42,7 +42,7 @@ public sealed class ChatMessageBuilder :
         return this;
     }
 
-    public IChatMessageBuilderAddMessagesState AddMessage(BriefTelegramMessage message, int? index = null)
+    public IChatMessageBuilderAddMessagesState AddMessage(TelegramMessage message, int? index = null)
     {
         if (index == null)
         {

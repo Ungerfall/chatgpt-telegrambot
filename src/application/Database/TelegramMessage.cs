@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Database;
 
-public class BriefTelegramMessage
+public class TelegramMessage
 {
     public const string DATE_UTC_FORMAT = "yyyy-MM-dd";
 

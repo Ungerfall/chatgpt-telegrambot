@@ -31,11 +31,11 @@ public class BriefMessage
         containerName: "%CosmosTelegramMessagesContainer%",
         Connection = "CosmosDbConnectionString",
         CreateIfNotExists = true)]
-    public async Task<BriefTelegramMessage> Run([ServiceBusTrigger(QueueTelegramMessage.QUEUE_NAME, Connection = "ServiceBusConnection")] QueueTelegramMessage msg)
+    public async Task<TelegramMessage> Run([ServiceBusTrigger(QueueTelegramMessage.QUEUE_NAME, Connection = "ServiceBusConnection")] QueueTelegramMessage msg)
     {
         _logger.LogInformation("C# ServiceBus queue trigger function processed message: {msg}", msg.Message);
-        var date = DateOnly.FromDateTime(DateTime.UtcNow).ToString(BriefTelegramMessage.DATE_UTC_FORMAT);
-        return new BriefTelegramMessage
+        var date = DateOnly.FromDateTime(DateTime.UtcNow).ToString(TelegramMessage.DATE_UTC_FORMAT);
+        return new TelegramMessage
         {
             Id = Guid.NewGuid(),
             ChatId = msg.ChatId,

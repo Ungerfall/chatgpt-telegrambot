@@ -26,7 +26,7 @@ public class UpdateHandler
     private readonly ILogger<UpdateHandler> _logger;
     private readonly IOpenAIService _openAiService;
     private readonly ServiceBusClient _serviceBus;
-    private readonly BriefTelegramMessageRepository _history;
+    private readonly TelegramMessageRepository _history;
     private readonly ITokenCounter _tokenCounter;
     private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
     private readonly IWhitelist _whitelist;
@@ -36,7 +36,7 @@ public class UpdateHandler
         ILogger<UpdateHandler> logger,
         IOpenAIService openAiService,
         ServiceBusClient serviceBus,
-        BriefTelegramMessageRepository history,
+        TelegramMessageRepository history,
         ITokenCounter tokenCounter,
         TooLongDidnotReadToday tooLongDidnotReadCommand,
         IWhitelist whitelist)

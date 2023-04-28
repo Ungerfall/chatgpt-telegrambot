@@ -56,7 +56,7 @@ IHost host = Host.CreateDefaultBuilder(args)
                 opt.ConnectionString,
                 clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 });
         });
-        services.AddScoped<BriefTelegramMessageRepository>();
+        services.AddScoped<TelegramMessageRepository>();
         services.AddScoped<PollingUpdateHandler>();
         services.AddScoped<ReceiverService>();
         services.AddScoped<ITokenCounter, TokenCounter>();

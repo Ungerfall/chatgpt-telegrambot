@@ -13,7 +13,7 @@ public interface IChatMessageBuilderSystemRoleState
 }
 public interface IChatMessageBuilderAddMessagesState
 {
-    IChatMessageBuilderAddMessagesState AddMessage(BriefTelegramMessage message, int? index = null);
+    IChatMessageBuilderAddMessagesState AddMessage(TelegramMessage message, int? index = null);
     IChatMessageBuilderAddMessagesState AddUserMessage(string message);
     ChatMessage[] Build();
     bool CanAddMessage { get; }

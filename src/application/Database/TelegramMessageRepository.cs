@@ -7,28 +7,28 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Database;
-public class BriefTelegramMessageRepository
+public class TelegramMessageRepository
 {
     private readonly CosmosClient _cosmos;
     private readonly CosmosDbOptions _options;
-    private readonly ILogger<BriefTelegramMessageRepository> _logger;
+    private readonly ILogger<TelegramMessageRepository> _logger;
 
-    public BriefTelegramMessageRepository(
+    public TelegramMessageRepository(
         CosmosClient cosmos,
         IOptions<CosmosDbOptions> options,
-        ILogger<BriefTelegramMessageRepository> logger)
+        ILogger<TelegramMessageRepository> logger)
     {
         _cosmos = cosmos;
         _options = options.Value;
         _logger = logger;
     }
 
-    public async IAsyncEnumerable<BriefTelegramMessage> Get(long chatId, DateOnly dateUtc, [EnumeratorCancellation] CancellationToken cancellation)
+    public async IAsyncEnumerable<TelegramMessage> Get(long chatId, DateOnly dateUtc, [EnumeratorCancellation] CancellationToken cancellation)
     {
         var container = _cosmos.GetContainer(_options.DatabaseId, _options.BriefMessagesContainerId);
         var query = new QueryDefinition("SELECT * FROM c WHERE c.dateUtc = @dateUtc ORDER BY c.date DESC")
-            .WithParameter("@dateUtc", dateUtc.ToString(BriefTelegramMessage.DATE_UTC_FORMAT));
-        using var it = container.GetItemQueryIterator<BriefTelegramMessage>(
+            .WithParameter("@dateUtc", dateUtc.ToString(TelegramMessage.DATE_UTC_FORMAT));
+        using var it = container.GetItemQueryIterator<TelegramMessage>(
             query,
             requestOptions: new QueryRequestOptions
             {
@@ -37,8 +37,8 @@ public class BriefTelegramMessageRepository
             });
         while (it.HasMoreResults)
         {
-            FeedResponse<BriefTelegramMessage> response = await it.ReadNextAsync(cancellation);
-            foreach (BriefTelegramMessage item in response)
+            FeedResponse<TelegramMessage> response = await it.ReadNextAsync(cancellation);
+            foreach (TelegramMessage item in response)
             {
                 cancellation.ThrowIfCancellationRequested();
                 yield return item;
@@ -51,11 +51,11 @@ public class BriefTelegramMessageRepository
         }
     }
 
-    public async IAsyncEnumerable<BriefTelegramMessage> GetAllOrderByDateDescending(long chatId, [EnumeratorCancellation] CancellationToken cancellation)
+    public async IAsyncEnumerable<TelegramMessage> GetAllOrderByDateDescending(long chatId, [EnumeratorCancellation] CancellationToken cancellation)
     {
         var container = _cosmos.GetContainer(_options.DatabaseId, _options.BriefMessagesContainerId);
         var query = new QueryDefinition("SELECT * FROM c ORDER BY c.date DESC");
-        using var it = container.GetItemQueryIterator<BriefTelegramMessage>(
+        using var it = container.GetItemQueryIterator<TelegramMessage>(
             query,
             requestOptions: new QueryRequestOptions
             {
@@ -64,8 +64,8 @@ public class BriefTelegramMessageRepository
             });
         while (it.HasMoreResults)
         {
-            FeedResponse<BriefTelegramMessage> response = await it.ReadNextAsync(cancellation);
-            foreach (BriefTelegramMessage item in response)
+            FeedResponse<TelegramMessage> response = await it.ReadNextAsync(cancellation);
+            foreach (TelegramMessage item in response)
             {
                 cancellation.ThrowIfCancellationRequested();
                 yield return item;
