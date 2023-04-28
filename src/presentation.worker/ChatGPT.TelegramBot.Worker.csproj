@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.13.1" />
-    <PackageReference Include="Betalgo.OpenAI.GPT3" Version="6.8.3" />
+    <PackageReference Include="Betalgo.OpenAI" Version="6.8.5" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.32.3" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.6.3" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />

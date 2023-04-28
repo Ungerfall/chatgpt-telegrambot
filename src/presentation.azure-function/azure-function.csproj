@@ -11,17 +11,17 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.13.1" />
+    <PackageReference Include="Betalgo.OpenAI" Version="6.8.5" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.32.3" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.13.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.CosmosDB" Version="4.0.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.0.13" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.7.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.9.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.10.0" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.6.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0-preview.2" />
-    <PackageReference Include="Betalgo.OpenAI.GPT3" Version="6.8.3" />
     <PackageReference Include="Unidecode.NET" Version="2.1.0" />
   </ItemGroup>
   <ItemGroup>
