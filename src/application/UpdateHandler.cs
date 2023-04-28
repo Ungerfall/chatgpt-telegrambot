@@ -13,7 +13,6 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
-using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.Queue;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
@@ -26,7 +25,7 @@ public class UpdateHandler
     private readonly ILogger<UpdateHandler> _logger;
     private readonly IOpenAIService _openAiService;
     private readonly ServiceBusClient _serviceBus;
-    private readonly TelegramMessageRepository _history;
+    private readonly ITelegramMessageRepository _history;
     private readonly ITokenCounter _tokenCounter;
     private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
     private readonly IWhitelist _whitelist;
@@ -36,7 +35,7 @@ public class UpdateHandler
         ILogger<UpdateHandler> logger,
         IOpenAIService openAiService,
         ServiceBusClient serviceBus,
-        TelegramMessageRepository history,
+        ITelegramMessageRepository history,
         ITokenCounter tokenCounter,
         TooLongDidnotReadToday tooLongDidnotReadCommand,
         IWhitelist whitelist)

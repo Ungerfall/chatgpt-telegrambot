@@ -51,7 +51,7 @@ var host = new HostBuilder()
                 opt.ConnectionString,
                 clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 });
         });
-        s.AddScoped<TelegramMessageRepository>();
+        s.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
         s.AddScoped<ITokenCounter, TokenCounter>();
         s.AddScoped<IWhitelist, Whitelist>();
         s.AddScoped<TooLongDidnotReadToday>();

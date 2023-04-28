@@ -5,9 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Database;
-public class TelegramMessageRepository
+public class TelegramMessageRepository : ITelegramMessageRepository
 {
     private readonly CosmosClient _cosmos;
     private readonly CosmosDbOptions _options;

@@ -2,18 +2,17 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
-using Ungerfall.ChatGpt.TelegramBot.Database;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
 public class ConversationHistory
 {
-    private readonly TelegramMessageRepository _history;
+    private readonly ITelegramMessageRepository _history;
     private readonly string _message;
     private readonly ITokenCounter _tokenCounter;
     private readonly IWhitelist _whitelist;
 
     public ConversationHistory(
-        TelegramMessageRepository history,
+        ITelegramMessageRepository history,
         string message,
         ITokenCounter tokenCounter,
         IWhitelist whitelist)
