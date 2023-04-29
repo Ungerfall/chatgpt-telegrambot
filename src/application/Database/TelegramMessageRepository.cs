@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Database;
@@ -24,9 +25,34 @@ public class TelegramMessageRepository : ITelegramMessageRepository
         _logger = logger;
     }
 
+    public async Task Create(TelegramMessage message, CancellationToken cancellation)
+    {
+        var container = _cosmos.GetContainer(_options.DatabaseId, _options.MessagesContainerId);
+        var date = DateTime.UtcNow.ToString(TelegramMessage.DATE_UTC_FORMAT);
+        await container.UpsertItemAsync(
+            new TelegramMessage
+            {
+                Id = Guid.NewGuid(),
+                ChatId = message.ChatId,
+                User = message.User,
+                UserId = message.UserId,
+                MessageId = message.MessageId,
+                Message = message.Message,
+                Date = message.Date,
+                DateUtc = date,
+                TTL = TelegramMessage.TTL_SECONDS,
+            },
+            new PartitionKey(message.ChatId),
+            new ItemRequestOptions
+            {
+                EnableContentResponseOnWrite = false,
+            },
+            cancellation);
+    }
+
     public async IAsyncEnumerable<TelegramMessage> Get(long chatId, DateOnly dateUtc, [EnumeratorCancellation] CancellationToken cancellation)
     {
-        var container = _cosmos.GetContainer(_options.DatabaseId, _options.BriefMessagesContainerId);
+        var container = _cosmos.GetContainer(_options.DatabaseId, _options.MessagesContainerId);
         var query = new QueryDefinition("SELECT * FROM c WHERE c.dateUtc = @dateUtc ORDER BY c.date DESC")
             .WithParameter("@dateUtc", dateUtc.ToString(TelegramMessage.DATE_UTC_FORMAT));
         using var it = container.GetItemQueryIterator<TelegramMessage>(
@@ -54,7 +80,7 @@ public class TelegramMessageRepository : ITelegramMessageRepository
 
     public async IAsyncEnumerable<TelegramMessage> GetAllOrderByDateDescending(long chatId, [EnumeratorCancellation] CancellationToken cancellation)
     {
-        var container = _cosmos.GetContainer(_options.DatabaseId, _options.BriefMessagesContainerId);
+        var container = _cosmos.GetContainer(_options.DatabaseId, _options.MessagesContainerId);
         var query = new QueryDefinition("SELECT * FROM c ORDER BY c.date DESC");
         using var it = container.GetItemQueryIterator<TelegramMessage>(
             query,

@@ -35,7 +35,7 @@ var host = new HostBuilder()
         {
             opt.DatabaseId = Environment.GetEnvironmentVariable("CosmosDatabase", EnvironmentVariableTarget.Process)
                 ?? throw new ArgumentException("CosmosDatabase is missing");
-            opt.BriefMessagesContainerId = Environment.GetEnvironmentVariable("CosmosTelegramMessagesContainer", EnvironmentVariableTarget.Process)
+            opt.MessagesContainerId = Environment.GetEnvironmentVariable("CosmosTelegramMessagesContainer", EnvironmentVariableTarget.Process)
                 ?? throw new ArgumentException("CosmosTelegramMessagesContainer is missing");
             opt.ConnectionString = Environment.GetEnvironmentVariable("CosmosDbConnectionString", EnvironmentVariableTarget.Process)
                 ?? throw new ArgumentException("CosmosDbConnectionString is missing");

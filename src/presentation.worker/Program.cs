@@ -27,7 +27,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.Configure<CosmosDbOptions>(opt =>
         {
             opt.DatabaseId = context.Configuration["CosmosDatabase"] ?? throw new ArgumentNullException(nameof(context));
-            opt.BriefMessagesContainerId = context.Configuration["CosmosTelegramMessagesContainer"] ?? throw new ArgumentNullException(nameof(context));
+            opt.MessagesContainerId = context.Configuration["CosmosTelegramMessagesContainer"] ?? throw new ArgumentNullException(nameof(context));
             opt.ConnectionString = context.Configuration["CosmosDbConnectionString"] ?? throw new ArgumentNullException(nameof(context));
         });
 

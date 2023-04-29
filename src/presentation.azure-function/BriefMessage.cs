@@ -10,10 +10,12 @@ using Ungerfall.ChatGpt.TelegramBot.Queue;
 
 namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 
+/// <summary>
+/// Shorten old messages using Chat GPT
+/// </summary>
 public class BriefMessage
 {
     private const int MIN_TOKENS_COUNT = 100;
-    private const int TTL = 1 * 24 * 60 * 60;
 
     private readonly ILogger _logger;
     private readonly IOpenAIService _openAiService;
@@ -34,19 +36,6 @@ public class BriefMessage
     public async Task<TelegramMessage> Run([ServiceBusTrigger(QueueTelegramMessage.QUEUE_NAME, Connection = "ServiceBusConnection")] QueueTelegramMessage msg)
     {
         _logger.LogInformation("C# ServiceBus queue trigger function processed message: {msg}", msg.Message);
-        var date = DateOnly.FromDateTime(DateTime.UtcNow).ToString(TelegramMessage.DATE_UTC_FORMAT);
-        return new TelegramMessage
-        {
-            Id = Guid.NewGuid(),
-            ChatId = msg.ChatId,
-            User = msg.User,
-            UserId = msg.UserId,
-            MessageId = msg.MessageId,
-            Message = msg.Message,
-            Date = msg.Date,
-            DateUtc = date,
-            TTL = TTL
-        };
         /*
         var tokensCount = _tokenCounter.Count(msg.Message);
         if (tokensCount <= MIN_TOKENS_COUNT)

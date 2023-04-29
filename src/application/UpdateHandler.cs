@@ -1,10 +1,8 @@
-﻿using Azure.Messaging.ServiceBus;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using OpenAI.GPT3.Interfaces;
 using OpenAI.GPT3.ObjectModels.RequestModels;
 using System;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -13,7 +11,6 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
-using Ungerfall.ChatGpt.TelegramBot.Queue;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
 
@@ -24,8 +21,7 @@ public class UpdateHandler
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<UpdateHandler> _logger;
     private readonly IOpenAIService _openAiService;
-    private readonly ServiceBusClient _serviceBus;
-    private readonly ITelegramMessageRepository _history;
+    private readonly ITelegramMessageRepository _telegramMessagesRepository;
     private readonly ITokenCounter _tokenCounter;
     private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
     private readonly IWhitelist _whitelist;
@@ -34,8 +30,7 @@ public class UpdateHandler
         ITelegramBotClient botClient,
         ILogger<UpdateHandler> logger,
         IOpenAIService openAiService,
-        ServiceBusClient serviceBus,
-        ITelegramMessageRepository history,
+        ITelegramMessageRepository telegramMessagesRepository,
         ITokenCounter tokenCounter,
         TooLongDidnotReadToday tooLongDidnotReadCommand,
         IWhitelist whitelist)
@@ -43,8 +38,7 @@ public class UpdateHandler
         _botClient = botClient;
         _logger = logger;
         _openAiService = openAiService;
-        _serviceBus = serviceBus;
-        _history = history;
+        _telegramMessagesRepository = telegramMessagesRepository;
         _tokenCounter = tokenCounter;
         _tooLongDidnotReadCommand = tooLongDidnotReadCommand;
         _whitelist = whitelist;
@@ -134,24 +128,24 @@ public class UpdateHandler
 
     private async Task SendMessageToConversationHistory(Message msg, string user, CancellationToken cancellation)
     {
-        var q = _serviceBus.CreateSender(QueueTelegramMessage.QUEUE_NAME);
-        var qMsg = new ServiceBusMessage(JsonSerializer.Serialize(new QueueTelegramMessage
-        {
-            ChatId = msg.Chat.Id,
-            User = user,
-            UserId = msg.From?.Id ?? default,
-            Message = msg.Text!, // null check upwards
-            MessageId = msg.MessageId,
-            Date = msg.Date,
-        }));
-        await q.SendMessageAsync(qMsg, cancellation);
+        await _telegramMessagesRepository.Create(
+            new Database.TelegramMessage
+            {
+                ChatId = msg.Chat.Id,
+                User = user,
+                UserId = msg.From?.Id ?? default,
+                Message = msg.Text!, // null check upwards
+                MessageId = msg.MessageId,
+                Date = msg.Date,
+            },
+            cancellation);
     }
 
     private async Task<(string, int?)> SendChatGptMessage(string message, string user, long chatId, CancellationToken cancellation)
     {
         _logger.LogInformation("Sending {Message} from {User}", message, user);
 
-        var history = new ConversationHistory(_history, $"{user}: {message}", _tokenCounter, _whitelist);
+        var history = new ConversationHistory(_telegramMessagesRepository, $"{user}: {message}", _tokenCounter, _whitelist);
         var (gptMessage, tokensCount) = await history.GetForChatGpt(chatId, cancellation);
         var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
             new ChatCompletionCreateRequest
