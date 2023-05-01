@@ -96,17 +96,17 @@ public class UpdateHandler
         await action;
     }
 
-    private async Task<Message> OnMessageReceived(Message message, string messageText, CancellationToken cancellation)
+    private async Task<Message> OnMessageReceived(Message msg, string messageText, CancellationToken cancellation)
     {
-        bool containMention = message.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
-        bool isBotMentioned = containMention && (message.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false);
-        var user = message.From?.FirstName ?? message.From?.Username ?? "unknown";
-        var chatId = message.Chat.Id;
+        bool containMention = msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
+        bool isBotMentioned = containMention && (msg.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false);
+        var user = msg.From?.FirstName ?? msg.From?.Username ?? "unknown";
+        var chatId = msg.Chat.Id;
         if (!isBotMentioned)
         {
             _logger.LogInformation("The message does not contain mention of bot.");
-            _ = SendMessageToConversationHistory(message, user, cancellation);
-            return message;
+            _ = SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
+            return msg;
         }
 
         await _botClient.SendChatActionAsync(
@@ -114,29 +114,37 @@ public class UpdateHandler
             ChatAction.Typing,
             cancellationToken: cancellation);
         var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, chatId, cancellation);
-        chatGptResponse = $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}";
-        var sentMsg = await _botClient.SendTextMessageAsync(
+        var sent = await _botClient.SendTextMessageAsync(
             chatId: chatId,
-            text: chatGptResponse,
-            replyToMessageId: message.MessageId,
+            text: $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}",
+            replyToMessageId: msg.MessageId,
             cancellationToken: cancellation);
-        _ = SendMessageToConversationHistory(message, user, cancellation);
-        _ = SendMessageToConversationHistory(sentMsg, user, cancellation);
-        _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMsg.MessageId);
-        return sentMsg;
+        _ = SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
+        _ = SaveToHistory(chatId, UserId(sent), sent.Text!, sent.MessageId, sent.Date, user, cancellation);
+        _logger.LogInformation("The message was sent with id: {SentMessageId}", sent.MessageId);
+        return sent;
+
+        long UserId(Message msg) => msg.From?.Id ?? default;
     }
 
-    private async Task SendMessageToConversationHistory(Message msg, string user, CancellationToken cancellation)
+    private async Task SaveToHistory(
+        long chatId,
+        long userId,
+        string message,
+        int messageId,
+        DateTime date,
+        string user,
+        CancellationToken cancellation)
     {
         await _telegramMessagesRepository.Create(
             new Database.TelegramMessage
             {
-                ChatId = msg.Chat.Id,
+                ChatId = chatId,
                 User = user,
-                UserId = msg.From?.Id ?? default,
-                Message = msg.Text!, // null check upwards
-                MessageId = msg.MessageId,
-                Date = msg.Date,
+                UserId = userId,
+                Message = message,
+                MessageId = messageId,
+                Date = date,
             },
             cancellation);
     }
