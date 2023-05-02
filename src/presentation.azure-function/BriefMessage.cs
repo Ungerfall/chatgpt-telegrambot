@@ -5,7 +5,6 @@ using OpenAI.GPT3.ObjectModels.RequestModels;
 using System;
 using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
-using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.Queue;
 
 namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction;
@@ -29,14 +28,22 @@ public class BriefMessage
     }
 
     [Function("BriefMessage")]
+    /*
     [CosmosDBOutput(databaseName: "%CosmosDatabase%",
         containerName: "%CosmosTelegramMessagesContainer%",
         Connection = "CosmosDbConnectionString",
         CreateIfNotExists = true)]
+    */
+    public async Task Run([TimerTrigger("0 */5 * * * *")] TimerInfo timer)
+    {
+        _logger.LogInformation("C# Timer trigger function executed at: {now}", DateTime.Now);
+        _logger.LogInformation("Next timer schedule at: {nextSchedule}", timer?.ScheduleStatus?.Next);
+    }
+    /*
     public async Task<TelegramMessage> Run([ServiceBusTrigger(QueueTelegramMessage.QUEUE_NAME, Connection = "ServiceBusConnection")] QueueTelegramMessage msg)
     {
+        using var fs = new FileStream("123", FileAccess.Read);
         _logger.LogInformation("C# ServiceBus queue trigger function processed message: {msg}", msg.Message);
-        /*
         var tokensCount = _tokenCounter.Count(msg.Message);
         if (tokensCount <= MIN_TOKENS_COUNT)
         {
@@ -53,8 +60,8 @@ public class BriefMessage
         }
 
         return briefMsg;
-        */
     }
+    */
 
     private async Task<string> AskChatGptForBriefMessage(QueueTelegramMessage msg)
     {
