@@ -119,12 +119,12 @@ public class UpdateHandler
             text: $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}",
             replyToMessageId: msg.MessageId,
             cancellationToken: cancellation);
-        _ = SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
-        _ = SaveToHistory(chatId, UserId(sent), sent.Text!, sent.MessageId, sent.Date, user, cancellation);
+        await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
+        await SaveToHistory(chatId, UserId(sent), sent.Text!, sent.MessageId, sent.Date, user, cancellation);
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sent.MessageId);
         return sent;
 
-        long UserId(Message msg) => msg.From?.Id ?? default;
+        static long UserId(Message msg) => msg.From?.Id ?? default;
     }
 
     private async Task SaveToHistory(

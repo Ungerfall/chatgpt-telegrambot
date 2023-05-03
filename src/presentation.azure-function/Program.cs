@@ -6,9 +6,11 @@ using Microsoft.Extensions.Options;
 using OpenAI.GPT3.Extensions;
 using OpenAI.GPT3.ObjectModels;
 using System;
+using System.Text.Json.Serialization;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
+using Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 
@@ -49,7 +51,19 @@ var host = new HostBuilder()
             var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
             return new CosmosClient(
                 opt.ConnectionString,
-                clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 });
+                clientOptions: new CosmosClientOptions
+                {
+                    MaxRetryAttemptsOnRateLimitedRequests = 3,
+                    Serializer = new CosmosSystemTextJsonSerializer(new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                        Converters =
+                        {
+                            new JsonStringEnumConverter()
+                        },
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    })
+                });
         });
         s.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
         s.AddScoped<ITokenCounter, TokenCounter>();
