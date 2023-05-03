@@ -9,7 +9,7 @@ public class TelegramMessage
     public const int TTL_SECONDS = 1 * 24 * 60 * 60;
 
     [JsonPropertyName("id")]
-    public Guid Id { get; init; }
+    public string Id { get; init; } = null!;
 
     [JsonPropertyName("chatId")]
     public long ChatId { get; set; }

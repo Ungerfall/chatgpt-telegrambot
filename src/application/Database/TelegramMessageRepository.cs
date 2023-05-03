@@ -32,7 +32,7 @@ public class TelegramMessageRepository : ITelegramMessageRepository
         await container.UpsertItemAsync(
             new TelegramMessage
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 ChatId = message.ChatId,
                 User = message.User,
                 UserId = message.UserId,
