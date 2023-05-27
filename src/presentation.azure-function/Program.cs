@@ -42,10 +42,7 @@ var host = new HostBuilder()
             opt.ConnectionString = Environment.GetEnvironmentVariable("CosmosDbConnectionString", EnvironmentVariableTarget.Process)
                 ?? throw new ArgumentException("CosmosDbConnectionString is missing");
         });
-        s.AddAzureClients(c =>
-        {
-            c.AddServiceBusClient(Environment.GetEnvironmentVariable("ServiceBusConnection", EnvironmentVariableTarget.Process));
-        });
+        s.AddAzureClients(c => c.AddServiceBusClient(Environment.GetEnvironmentVariable("ServiceBusConnection", EnvironmentVariableTarget.Process)));
         s.AddSingleton(sp =>
         {
             var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;

@@ -45,10 +45,7 @@ IHost host = Host.CreateDefaultBuilder(args)
             setup.Organization = context.Configuration["OPENAI_ORG"] ?? throw new ArgumentNullException(nameof(context));
             setup.DefaultModelId = Models.ChatGpt3_5Turbo;
         });
-        services.AddAzureClients(c =>
-        {
-            c.AddServiceBusClient(context.Configuration["ServiceBusConnection"]);
-        });
+        services.AddAzureClients(c => c.AddServiceBusClient(context.Configuration["ServiceBusConnection"]));
         services.AddSingleton(sp =>
         {
             var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
