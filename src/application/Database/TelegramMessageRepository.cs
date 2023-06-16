@@ -104,4 +104,13 @@ public class TelegramMessageRepository : ITelegramMessageRepository
             }
         }
     }
+    public IAsyncEnumerable<TelegramMessage> GetOldMessages(int minLenght, CancellationToken cancellation)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task Update(TelegramMessage message, CancellationToken cancellation)
+    {
+        throw new NotImplementedException();
+    }
 }
