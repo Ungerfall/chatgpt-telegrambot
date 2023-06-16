@@ -34,4 +34,7 @@ public class TelegramMessage
 
     [JsonPropertyName("ttl")]
     public int TTL { get; init; }
+
+    [JsonPropertyName("isShrunk")]
+    public bool IsShrunk { get; init; }
 }
