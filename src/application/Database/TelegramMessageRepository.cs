@@ -104,9 +104,36 @@ public class TelegramMessageRepository : ITelegramMessageRepository
             }
         }
     }
-    public IAsyncEnumerable<TelegramMessage> GetOldMessages(int minLenght, CancellationToken cancellation)
+    public async IAsyncEnumerable<TelegramMessage> GetOldMessages(int minLength, [EnumeratorCancellation] CancellationToken cancellation)
     {
-        throw new NotImplementedException();
+        var container = _cosmos.GetContainer(_options.DatabaseId, _options.MessagesContainerId);
+        var olderThanDate = DateTime.UtcNow.AddHours(-1d);
+        var query = new QueryDefinition(@"SELECT * FROM c
+                WHERE (NOT IS_DEFINED(c.isShrunk) OR c.isShrunk = false)
+                    AND TimestampToDateTime(c._ts * 1000) < @olderThanDate
+                ORDER BY c._ts
+                OFFSET 0 LIMIT 100")
+            .WithParameter("@olderThanDate", olderThanDate);
+        using var it = container.GetItemQueryIterator<TelegramMessage>(
+            query,
+            requestOptions: new QueryRequestOptions
+            {
+                MaxConcurrency = 1,
+            });
+        while (it.HasMoreResults)
+        {
+            FeedResponse<TelegramMessage> response = await it.ReadNextAsync(cancellation);
+            foreach (TelegramMessage item in response)
+            {
+                cancellation.ThrowIfCancellationRequested();
+                yield return item;
+            }
+
+            if (response.Diagnostics != null)
+            {
+                _logger.LogWarning("Diagnostics: {diagnostics}", response.Diagnostics.ToString());
+            }
+        }
     }
 
     public Task Update(TelegramMessage message, CancellationToken cancellation)

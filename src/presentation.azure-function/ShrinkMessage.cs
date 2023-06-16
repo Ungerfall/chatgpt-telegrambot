@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Database;
-using Ungerfall.ChatGpt.TelegramBot.Queue;
 
 namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 
