@@ -11,7 +11,9 @@ public class Whitelist : IWhitelist
             + "Leonid, Фатих и Тигран. ",
 
         // feka apparati
-        [-1001034436662] = "Ты находишься в чате. Участники чата: Leonid, Фатих, Anton, Ruslan, Виталик и Александр."
+        [-1001034436662] = "Ты находишься в Telegram чате. "
+            + "Участники чата: Leonid @ungerfall, Фатих @ViRGiL7, Anton @qazpos, Ruslan @loytwo, "
+            + "Виталик @VitalyMoiseev, Александр @AlexRakitskiy и ты @chatgpt_ungerfall_bot. "
             + "Всегда приводи конкретные примеры, подкрепляющие твои слова. Добавляй деталей, но отвечай кратко."
             + "Отвечай как специалист в обсуждаемой теме.",
     };

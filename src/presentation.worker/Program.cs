@@ -27,7 +27,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.Configure<CosmosDbOptions>(opt =>
         {
             opt.DatabaseId = context.Configuration["CosmosDatabase"] ?? throw new ArgumentNullException(nameof(context));
-            opt.BriefMessagesContainerId = context.Configuration["CosmosTelegramMessagesContainer"] ?? throw new ArgumentNullException(nameof(context));
+            opt.MessagesContainerId = context.Configuration["CosmosTelegramMessagesContainer"] ?? throw new ArgumentNullException(nameof(context));
             opt.ConnectionString = context.Configuration["CosmosDbConnectionString"] ?? throw new ArgumentNullException(nameof(context));
         });
 
@@ -45,10 +45,7 @@ IHost host = Host.CreateDefaultBuilder(args)
             setup.Organization = context.Configuration["OPENAI_ORG"] ?? throw new ArgumentNullException(nameof(context));
             setup.DefaultModelId = Models.ChatGpt3_5Turbo;
         });
-        services.AddAzureClients(c =>
-        {
-            c.AddServiceBusClient(context.Configuration["ServiceBusConnection"]);
-        });
+        services.AddAzureClients(c => c.AddServiceBusClient(context.Configuration["ServiceBusConnection"]));
         services.AddSingleton(sp =>
         {
             var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
@@ -56,7 +53,7 @@ IHost host = Host.CreateDefaultBuilder(args)
                 opt.ConnectionString,
                 clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 });
         });
-        services.AddScoped<BriefTelegramMessageRepository>();
+        services.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
         services.AddScoped<PollingUpdateHandler>();
         services.AddScoped<ReceiverService>();
         services.AddScoped<ITokenCounter, TokenCounter>();

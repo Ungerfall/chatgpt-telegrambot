@@ -3,12 +3,13 @@ using System.Text.Json.Serialization;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Database;
 
-public class BriefTelegramMessage
+public class TelegramMessage
 {
     public const string DATE_UTC_FORMAT = "yyyy-MM-dd";
+    public const int TTL_SECONDS = 1 * 24 * 60 * 60;
 
     [JsonPropertyName("id")]
-    public Guid Id { get; init; }
+    public string Id { get; init; } = null!;
 
     [JsonPropertyName("chatId")]
     public long ChatId { get; set; }
@@ -33,4 +34,7 @@ public class BriefTelegramMessage
 
     [JsonPropertyName("ttl")]
     public int TTL { get; init; }
+
+    [JsonPropertyName("isShrunk")]
+    public bool IsShrunk { get; init; }
 }

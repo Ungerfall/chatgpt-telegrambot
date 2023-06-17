@@ -11,7 +11,7 @@ public sealed class ChatMessageBuilder :
     IChatMessageBuilderAddMessagesState
 {
     private const string BotUser = "chatgpt_ungerfall_bot";
-    private const double MaxTokens = 4096 * 0.4; // currently tokens count differs to open ai response.
+    private const double MaxTokens = 4096 * 0.7; // .3 if left for a gpt response
 
     private ITokenCounter _tokenCounter = null!;
     private int _tokensSum;
@@ -42,7 +42,7 @@ public sealed class ChatMessageBuilder :
         return this;
     }
 
-    public IChatMessageBuilderAddMessagesState AddMessage(BriefTelegramMessage message, int? index = null)
+    public IChatMessageBuilderAddMessagesState AddMessage(TelegramMessage message, int? index = null)
     {
         if (index == null)
         {

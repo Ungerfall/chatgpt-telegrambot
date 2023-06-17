@@ -6,9 +6,11 @@ using Microsoft.Extensions.Options;
 using OpenAI.GPT3.Extensions;
 using OpenAI.GPT3.ObjectModels;
 using System;
+using System.Text.Json.Serialization;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
+using Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 
@@ -35,23 +37,32 @@ var host = new HostBuilder()
         {
             opt.DatabaseId = Environment.GetEnvironmentVariable("CosmosDatabase", EnvironmentVariableTarget.Process)
                 ?? throw new ArgumentException("CosmosDatabase is missing");
-            opt.BriefMessagesContainerId = Environment.GetEnvironmentVariable("CosmosTelegramMessagesContainer", EnvironmentVariableTarget.Process)
+            opt.MessagesContainerId = Environment.GetEnvironmentVariable("CosmosTelegramMessagesContainer", EnvironmentVariableTarget.Process)
                 ?? throw new ArgumentException("CosmosTelegramMessagesContainer is missing");
             opt.ConnectionString = Environment.GetEnvironmentVariable("CosmosDbConnectionString", EnvironmentVariableTarget.Process)
                 ?? throw new ArgumentException("CosmosDbConnectionString is missing");
         });
-        s.AddAzureClients(c =>
-        {
-            c.AddServiceBusClient(Environment.GetEnvironmentVariable("ServiceBusConnection", EnvironmentVariableTarget.Process));
-        });
+        s.AddAzureClients(c => c.AddServiceBusClient(Environment.GetEnvironmentVariable("ServiceBusConnection", EnvironmentVariableTarget.Process)));
         s.AddSingleton(sp =>
         {
             var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
             return new CosmosClient(
                 opt.ConnectionString,
-                clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 });
+                clientOptions: new CosmosClientOptions
+                {
+                    MaxRetryAttemptsOnRateLimitedRequests = 3,
+                    Serializer = new CosmosSystemTextJsonSerializer(new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                        Converters =
+                        {
+                            new JsonStringEnumConverter()
+                        },
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    })
+                });
         });
-        s.AddScoped<BriefTelegramMessageRepository>();
+        s.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
         s.AddScoped<ITokenCounter, TokenCounter>();
         s.AddScoped<IWhitelist, Whitelist>();
         s.AddScoped<TooLongDidnotReadToday>();

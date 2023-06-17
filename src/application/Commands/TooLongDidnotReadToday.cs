@@ -8,13 +8,12 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
-using Ungerfall.ChatGpt.TelegramBot.Database;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Commands;
 public class TooLongDidnotReadToday
 {
     private const string AskForTLDR = "Напиши TL;DR всей истории переписки. Выведи статистику по пользователям. Избегай обобщений.";
-    private readonly BriefTelegramMessageRepository _history;
+    private readonly ITelegramMessageRepository _history;
     private readonly ITokenCounter _tokenCounter;
     private readonly ITelegramBotClient _botClient;
     private readonly IOpenAIService _openAiService;
@@ -22,7 +21,7 @@ public class TooLongDidnotReadToday
     private readonly IWhitelist _whitelist;
 
     public TooLongDidnotReadToday(
-        BriefTelegramMessageRepository history,
+        ITelegramMessageRepository history,
         ITokenCounter tokenCounter,
         IOpenAIService openAiService,
         ILogger<TooLongDidnotReadToday> logger,
