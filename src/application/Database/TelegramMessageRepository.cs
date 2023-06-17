@@ -136,8 +136,17 @@ public class TelegramMessageRepository : ITelegramMessageRepository
         }
     }
 
-    public Task Update(TelegramMessage message, CancellationToken cancellation)
+    public async Task Update(TelegramMessage message, CancellationToken cancellation)
     {
-        throw new NotImplementedException();
+        var container = _cosmos.GetContainer(_options.DatabaseId, _options.MessagesContainerId);
+        await container.ReplaceItemAsync(
+            message,
+            message.Id,
+            new PartitionKey(message.ChatId),
+            new ItemRequestOptions
+            {
+                EnableContentResponseOnWrite = false,
+            },
+            cancellation);
     }
 }
