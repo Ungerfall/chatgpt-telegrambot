@@ -58,6 +58,7 @@ public class ShrinkMessage
                     DateUtc = msg.DateUtc,
                     TTL = msg.TTL,
                     IsShrunk = true,
+                    OriginalMessage = msg.Message,
                 }, CancellationToken.None);
             }
         }
