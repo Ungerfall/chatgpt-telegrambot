@@ -111,9 +111,11 @@ public class TelegramMessageRepository : ITelegramMessageRepository
         var query = new QueryDefinition(@"SELECT * FROM c
                 WHERE (NOT IS_DEFINED(c.isShrunk) OR c.isShrunk = false)
                     AND TimestampToDateTime(c._ts * 1000) < @olderThanDate
+                    AND LENGTH(c.message) > @minLength
                 ORDER BY c._ts
                 OFFSET 0 LIMIT 100")
-            .WithParameter("@olderThanDate", olderThanDate);
+            .WithParameter("@olderThanDate", olderThanDate)
+            .WithParameter("@minLength", minLength);
         using var it = container.GetItemQueryIterator<TelegramMessage>(
             query,
             requestOptions: new QueryRequestOptions

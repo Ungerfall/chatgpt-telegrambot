@@ -35,7 +35,7 @@ public class ShrinkMessage
     }
 
     [Function("ShrinkMessage")]
-    public async Task Run([TimerTrigger("0 */5 * * * *")] TimerInfo timer)
+    public async Task Run([TimerTrigger("0 */30 * * * *")] TimerInfo timer)
     {
         _logger.LogInformation("C# Timer trigger function executed at: {now}", DateTime.Now);
         await foreach (var msg in _messagesRepository.GetOldMessages(MIN_MESSAGE_LENGTH, CancellationToken.None))
@@ -58,6 +58,7 @@ public class ShrinkMessage
                     DateUtc = msg.DateUtc,
                     TTL = msg.TTL,
                     IsShrunk = true,
+                    OriginalMessage = msg.Message,
                 }, CancellationToken.None);
             }
         }
@@ -74,7 +75,7 @@ public class ShrinkMessage
                 {
                     ChatMessage.FromSystem("Assistant is an intelligent chatbot designed to shrink chat messages, so that the messages will be used later to feed chat GPT api."
                             + "Instructions:"
-                            + "- Do not change language of message."
+                            + "- Chat language is Russian."
                             + "- Keep context as close as possible."
                             + "- Do not remove mentions starting with @."
                             + "- Do not remove links."),

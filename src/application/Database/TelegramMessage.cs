@@ -37,4 +37,9 @@ public class TelegramMessage
 
     [JsonPropertyName("isShrunk")]
     public bool IsShrunk { get; init; }
+
+    /// <summary>
+    /// In case of message is shrunk
+    /// </summary>
+    public string? OriginalMessage { get; init; }
 }
