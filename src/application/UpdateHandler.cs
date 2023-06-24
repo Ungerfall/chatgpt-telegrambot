@@ -24,6 +24,7 @@ public class UpdateHandler
     private readonly ITelegramMessageRepository _telegramMessagesRepository;
     private readonly ITokenCounter _tokenCounter;
     private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
+    private readonly GenerateImage _imageCommand;
     private readonly IWhitelist _whitelist;
 
     public UpdateHandler(
@@ -33,7 +34,8 @@ public class UpdateHandler
         ITelegramMessageRepository telegramMessagesRepository,
         ITokenCounter tokenCounter,
         TooLongDidnotReadToday tooLongDidnotReadCommand,
-        IWhitelist whitelist)
+        IWhitelist whitelist,
+        GenerateImage imageCommand)
     {
         _botClient = botClient;
         _logger = logger;
@@ -42,6 +44,7 @@ public class UpdateHandler
         _tokenCounter = tokenCounter;
         _tooLongDidnotReadCommand = tooLongDidnotReadCommand;
         _whitelist = whitelist;
+        _imageCommand = imageCommand;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -90,6 +93,7 @@ public class UpdateHandler
 
         var action = messageText.Split('@')[0] switch
         {
+            "/image" => _imageCommand.Execute(message, cancellation),
             "/tldrtoday" => _tooLongDidnotReadCommand.Execute(message, cancellation),
             _ => OnMessageReceived(message, messageText, cancellation),
         };
