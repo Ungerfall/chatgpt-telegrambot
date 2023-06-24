@@ -66,6 +66,7 @@ var host = new HostBuilder()
         s.AddScoped<ITokenCounter, TokenCounter>();
         s.AddScoped<IWhitelist, Whitelist>();
         s.AddScoped<TooLongDidnotReadToday>();
+        s.AddScoped<GenerateImage>();
         s.AddScoped<UpdateHandler>();
     })
     .Build();

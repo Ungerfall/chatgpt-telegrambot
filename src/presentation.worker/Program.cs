@@ -59,6 +59,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<ITokenCounter, TokenCounter>();
         services.AddScoped<IWhitelist, Whitelist>();
         services.AddScoped<TooLongDidnotReadToday>();
+        services.AddScoped<GenerateImage>();
         services.AddScoped<UpdateHandler>();
         services.AddHostedService<PollingService>();
     })

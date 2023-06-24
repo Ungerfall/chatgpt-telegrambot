@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Commands;
 public class GenerateImage
@@ -39,6 +40,10 @@ public class GenerateImage
                 cancellationToken: cancellation);
         }
 
+        await _botClient.SendChatActionAsync(
+            chatId: message.Chat.Id,
+            ChatAction.UploadPhoto,
+            cancellationToken: cancellation);
         var image = await _openAiService.Image.CreateImage(
             new OpenAI.GPT3.ObjectModels.RequestModels.ImageCreateRequest
             {
@@ -46,7 +51,8 @@ public class GenerateImage
                 Size = IMAGE_SIZE,
                 N = 1,
                 User = message.From?.Username ?? "unknown",
-            });
+            },
+            cancellation);
         if (image.Successful)
         {
             return await _botClient.SendPhotoAsync(

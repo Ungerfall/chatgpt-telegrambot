@@ -77,7 +77,7 @@ public class UpdateHandler
 
     private async Task BotOnMessageReceived(Message message, CancellationToken cancellation)
     {
-        _logger.LogInformation("Receive message type: {MessageType}. Group: {GroupId}", message.Type, message.Chat.Id);
+        _logger.LogInformation("Receive message {@message}", new { message.Text, message.Type, message.Chat.Id });
         if (message.Text is not { } messageText)
             return;
 
