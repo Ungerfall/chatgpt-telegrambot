@@ -24,6 +24,7 @@ public class UpdateHandler
     private readonly ITelegramMessageRepository _telegramMessagesRepository;
     private readonly ITokenCounter _tokenCounter;
     private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
+    private readonly GenerateImage _imageCommand;
     private readonly IWhitelist _whitelist;
 
     public UpdateHandler(
@@ -33,7 +34,8 @@ public class UpdateHandler
         ITelegramMessageRepository telegramMessagesRepository,
         ITokenCounter tokenCounter,
         TooLongDidnotReadToday tooLongDidnotReadCommand,
-        IWhitelist whitelist)
+        IWhitelist whitelist,
+        GenerateImage imageCommand)
     {
         _botClient = botClient;
         _logger = logger;
@@ -42,6 +44,7 @@ public class UpdateHandler
         _tokenCounter = tokenCounter;
         _tooLongDidnotReadCommand = tooLongDidnotReadCommand;
         _whitelist = whitelist;
+        _imageCommand = imageCommand;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -74,7 +77,7 @@ public class UpdateHandler
 
     private async Task BotOnMessageReceived(Message message, CancellationToken cancellation)
     {
-        _logger.LogInformation("Receive message type: {MessageType}. Group: {GroupId}", message.Type, message.Chat.Id);
+        _logger.LogInformation("Receive message {@message}", new { message.Text, message.Type, message.Chat.Id });
         if (message.Text is not { } messageText)
             return;
 
@@ -88,8 +91,14 @@ public class UpdateHandler
             return;
         }
 
-        var action = messageText.Split('@')[0] switch
+        int commandEndIndex = messageText.GetCommandEndIndex();
+        string command = messageText[0] == '/'
+            ? messageText[0..commandEndIndex]
+            : string.Empty;
+        string msgWithoutCommand = messageText[commandEndIndex..];
+        var action = command switch
         {
+            "/image" => _imageCommand.Execute(message, msgWithoutCommand, cancellation),
             "/tldrtoday" => _tooLongDidnotReadCommand.Execute(message, cancellation),
             _ => OnMessageReceived(message, messageText, cancellation),
         };
