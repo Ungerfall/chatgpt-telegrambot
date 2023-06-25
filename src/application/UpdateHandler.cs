@@ -91,9 +91,14 @@ public class UpdateHandler
             return;
         }
 
-        var action = messageText.Split('@')[0] switch
+        int commandEndIndex = messageText.GetCommandEndIndex();
+        string command = messageText[0] == '/'
+            ? messageText[0..commandEndIndex]
+            : string.Empty;
+        string msgWithoutCommand = messageText[commandEndIndex..];
+        var action = command switch
         {
-            "/image" => _imageCommand.Execute(message, cancellation),
+            "/image" => _imageCommand.Execute(message, msgWithoutCommand, cancellation),
             "/tldrtoday" => _tooLongDidnotReadCommand.Execute(message, cancellation),
             _ => OnMessageReceived(message, messageText, cancellation),
         };

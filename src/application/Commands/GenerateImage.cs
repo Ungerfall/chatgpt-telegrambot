@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using OpenAI.GPT3.Interfaces;
-using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -27,10 +25,8 @@ public class GenerateImage
         _botClient = botClient;
     }
 
-
-    public async Task<Message> Execute(Message message, CancellationToken cancellation)
+    public async Task<Message> Execute(Message message, string msgWithoutCommand, CancellationToken cancellation)
     {
-        string? msgWithoutCommand = message.Text?.Substring(message.Text?.IndexOf('@') + 1 ?? 0);
         if (string.IsNullOrWhiteSpace(msgWithoutCommand))
         {
             return await _botClient.SendTextMessageAsync(
@@ -57,7 +53,7 @@ public class GenerateImage
         {
             return await _botClient.SendPhotoAsync(
                 chatId: message.Chat.Id,
-                photo: InputFile.FromStream(new MemoryStream(Convert.FromBase64String(image.Results[0].B64))),
+                photo: InputFile.FromUri(image.Results[0].Url),
                 hasSpoiler: true,
                 replyToMessageId: message.MessageId,
                 cancellationToken: cancellation);
