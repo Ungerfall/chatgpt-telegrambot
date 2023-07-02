@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using OpenAI.GPT3.Interfaces;
+using OpenAI.Interfaces;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -41,7 +41,7 @@ public class GenerateImage
             ChatAction.UploadPhoto,
             cancellationToken: cancellation);
         var image = await _openAiService.Image.CreateImage(
-            new OpenAI.GPT3.ObjectModels.RequestModels.ImageCreateRequest
+            new OpenAI.ObjectModels.RequestModels.ImageCreateRequest
             {
                 Prompt = msgWithoutCommand,
                 Size = IMAGE_SIZE,
