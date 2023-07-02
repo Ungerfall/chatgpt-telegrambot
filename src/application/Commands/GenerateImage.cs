@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using OpenAI.Interfaces;
+using OpenAI.ObjectModels;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -9,8 +10,6 @@ using Telegram.Bot.Types.Enums;
 namespace Ungerfall.ChatGpt.TelegramBot.Commands;
 public class GenerateImage
 {
-    private const string IMAGE_SIZE = "256x256";
-
     private readonly IOpenAIService _openAiService;
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<GenerateImage> _logger;
@@ -44,7 +43,7 @@ public class GenerateImage
             new OpenAI.ObjectModels.RequestModels.ImageCreateRequest
             {
                 Prompt = msgWithoutCommand,
-                Size = IMAGE_SIZE,
+                Size = StaticValues.ImageStatics.Size.Size256,
                 N = 1,
                 User = message.From?.Username ?? "unknown",
             },
