@@ -13,11 +13,11 @@ public class GenerateImage
 
     private readonly IOpenAIService _openAiService;
     private readonly ITelegramBotClient _botClient;
-    private readonly ILogger<TooLongDidnotReadToday> _logger;
+    private readonly ILogger<GenerateImage> _logger;
 
     public GenerateImage(
         IOpenAIService openAiService,
-        ILogger<TooLongDidnotReadToday> logger,
+        ILogger<GenerateImage> logger,
         ITelegramBotClient botClient)
     {
         _openAiService = openAiService;
