@@ -52,7 +52,9 @@ public class TooLongDidnotReadToday
         }
 
         var summaries = await Task.WhenAll(gptTasks);
-        var telegramMessage = $"{string.Join(NewLine, summaries)}{NewLine}TL;DR не записывается в историю";
+        var telegramMessage = summaries.Length == 0
+            ? "Сегодня ничего не произошло"
+            : $"{string.Join(NewLine, summaries)}{NewLine}TL;DR не записывается в историю";
         return await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: telegramMessage,
@@ -85,6 +87,11 @@ public class TooLongDidnotReadToday
             }
 
             mb.AddMessage(h, 1); // because of descending order of items in history
+        }
+
+        if (!mb.ContainsUserMessage)
+        {
+            yield break;
         }
 
         mb.AddUserMessage(AskForTLDR);

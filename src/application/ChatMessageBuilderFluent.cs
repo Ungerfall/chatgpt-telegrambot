@@ -18,4 +18,5 @@ public interface IChatMessageBuilderAddMessagesState
     ChatMessage[] Build();
     bool CanAddMessage { get; }
     int TokensCount { get; }
+    bool ContainsUserMessage { get; }
 }

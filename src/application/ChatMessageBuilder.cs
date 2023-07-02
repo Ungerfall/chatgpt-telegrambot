@@ -1,4 +1,5 @@
-﻿using OpenAI.ObjectModels.RequestModels;
+﻿using OpenAI.ObjectModels;
+using OpenAI.ObjectModels.RequestModels;
 using System.Collections.Generic;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Database;
@@ -79,4 +80,6 @@ public sealed class ChatMessageBuilder :
     public bool CanAddMessage => _tokensSum <= MaxTokens;
 
     public int TokensCount => _tokensSum;
+
+    public bool ContainsUserMessage => _message.Exists(x => x.Role == StaticValues.ChatMessageRoles.User);
 }
