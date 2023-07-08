@@ -31,7 +31,7 @@ var host = new HostBuilder()
         {
             setup.ApiKey = openAiApiKey;
             setup.Organization = openAiOrg;
-            setup.DefaultModelId = Models.ChatGpt3_5Turbo;
+            setup.DefaultModelId = Models.Gpt_4;
         });
         s.Configure<CosmosDbOptions>(opt =>
         {

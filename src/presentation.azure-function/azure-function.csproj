@@ -11,7 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.15.0" />
-    <PackageReference Include="Betalgo.OpenAI" Version="7.0.0" />
+    <PackageReference Include="Betalgo.OpenAI" Version="7.1.2-beta" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.35.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.16.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.CosmosDB" Version="4.3.0" />

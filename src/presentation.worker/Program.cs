@@ -43,7 +43,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         {
             setup.ApiKey = context.Configuration["OPENAI_API_KEY"] ?? throw new ArgumentNullException(nameof(context));
             setup.Organization = context.Configuration["OPENAI_ORG"] ?? throw new ArgumentNullException(nameof(context));
-            setup.DefaultModelId = Models.ChatGpt3_5Turbo;
+            setup.DefaultModelId = Models.Gpt_4;
         });
         services.AddAzureClients(c => c.AddServiceBusClient(context.Configuration["ServiceBusConnection"]));
         services.AddSingleton(sp =>

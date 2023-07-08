@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using OpenAI.Interfaces;
+using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
 using System;
 using System.Linq;
@@ -164,13 +165,15 @@ public class UpdateHandler
 
         var history = new ConversationHistory(_telegramMessagesRepository, $"{user}: {message}", _tokenCounter, _whitelist);
         var (gptMessage, tokensCount) = await history.GetForChatGpt(chatId, cancellation);
-        var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
+        var completionResult = await _openAiService.ChatCompletion.Create(
             new ChatCompletionCreateRequest
             {
                 Messages = gptMessage,
                 Temperature = 0f,
                 User = user,
+                Model = Models.Model.Gpt_4.EnumToString()
             },
+            Models.Model.Gpt_4,
             cancellationToken: cancellation);
         _logger.LogInformation("Tokens: {@tokens}",
             new
@@ -199,13 +202,13 @@ public class UpdateHandler
 
     public async Task HandlePollingErrorAsync(Exception exception, CancellationToken cancellationToken)
     {
-        var ErrorMessage = exception switch
+        var errorMessage = exception switch
         {
             ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
             _ => exception.ToString()
         };
 
-        _logger.LogInformation("HandleError: {ErrorMessage}", ErrorMessage);
+        _logger.LogInformation("HandleError: {ErrorMessage}", errorMessage);
 
         // Cooldown in case of network connection error
         if (exception is RequestException)

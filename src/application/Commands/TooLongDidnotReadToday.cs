@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using OpenAI.Interfaces;
+using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
 using System;
 using System.Collections.Generic;
@@ -83,6 +84,7 @@ public class TooLongDidnotReadToday
                     Messages = mb.Build(),
                     Temperature = temperature,
                     User = user,
+                    Model = Models.Model.Gpt_4.EnumToString(),
                 };
             }
 
@@ -101,13 +103,15 @@ public class TooLongDidnotReadToday
             Messages = gptMessage,
             Temperature = temperature,
             User = user,
+            Model = Models.Model.Gpt_4.EnumToString(),
         };
     }
 
     private async Task<string> SendGptRequest(ChatCompletionCreateRequest request, CancellationToken cancellation)
     {
-        var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
+        var completionResult = await _openAiService.ChatCompletion.Create(
             request,
+            Models.Model.Gpt_4,
             cancellationToken: cancellation);
         _logger.LogInformation("Tokens: {@tokens}",
             new

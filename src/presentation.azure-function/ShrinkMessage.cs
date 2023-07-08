@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using OpenAI.Interfaces;
+using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
 using System;
 using System.Threading;
@@ -68,7 +69,7 @@ public class ShrinkMessage
 
     private async Task<string> AskChatGptToShrink(TelegramMessage msg)
     {
-        var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
+        var completionResult = await _openAiService.ChatCompletion.Create(
             new ChatCompletionCreateRequest
             {
                 Messages = new[]
@@ -83,7 +84,9 @@ public class ShrinkMessage
                 },
                 Temperature = 0f,
                 User = msg.User,
-            });
+                Model = Models.Model.Gpt_4.EnumToString(),
+            },
+            Models.Model.Gpt_4);
         if (completionResult.Successful)
         {
             return completionResult.Choices[0].Message.Content;
