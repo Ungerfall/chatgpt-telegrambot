@@ -12,7 +12,7 @@ public sealed class ChatMessageBuilder :
     IChatMessageBuilderAddMessagesState
 {
     private const string BotUser = "chatgpt_ungerfall_bot";
-    private const double MaxTokens = 4096 * 0.7; // .3 if left for a gpt response
+    private const double MaxTokens = 4096 * 0.4; // .3 if left for a gpt response
 
     private ITokenCounter _tokenCounter = null!;
     private int _tokensSum;
