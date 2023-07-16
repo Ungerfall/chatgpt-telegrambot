@@ -14,21 +14,21 @@ using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using static System.Environment;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Commands;
-public class TooLongDidnotReadToday
+public class TooLongDidNotReadToday
 {
     private const string AskForTLDR = "Напиши TL;DR переписки маркированным списком.";
     private readonly ITelegramMessageRepository _history;
     private readonly ITokenCounter _tokenCounter;
     private readonly ITelegramBotClient _botClient;
     private readonly IOpenAIService _openAiService;
-    private readonly ILogger<TooLongDidnotReadToday> _logger;
+    private readonly ILogger<TooLongDidNotReadToday> _logger;
     private readonly IWhitelist _whitelist;
 
-    public TooLongDidnotReadToday(
+    public TooLongDidNotReadToday(
         ITelegramMessageRepository history,
         ITokenCounter tokenCounter,
         IOpenAIService openAiService,
-        ILogger<TooLongDidnotReadToday> logger,
+        ILogger<TooLongDidNotReadToday> logger,
         ITelegramBotClient botClient,
         IWhitelist whitelist)
     {

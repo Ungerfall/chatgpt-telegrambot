@@ -24,7 +24,7 @@ public class UpdateHandler
     private readonly IOpenAIService _openAiService;
     private readonly ITelegramMessageRepository _telegramMessagesRepository;
     private readonly ITokenCounter _tokenCounter;
-    private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
+    private readonly TooLongDidNotReadToday _tooLongDidnotReadCommand;
     private readonly GenerateImage _imageCommand;
     private readonly IWhitelist _whitelist;
 
@@ -34,7 +34,7 @@ public class UpdateHandler
         IOpenAIService openAiService,
         ITelegramMessageRepository telegramMessagesRepository,
         ITokenCounter tokenCounter,
-        TooLongDidnotReadToday tooLongDidnotReadCommand,
+        TooLongDidNotReadToday tooLongDidnotReadCommand,
         IWhitelist whitelist,
         GenerateImage imageCommand)
     {
