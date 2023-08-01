@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 namespace Ungerfall.ChatGpt.TelegramBot.TimedTasks;
 public class DailyTooLongDidNotReadToday
 {
-    public const string CRONTAB = "0 30 23 * * *";
+    public const string CRON_EXPRESSION = "0 30 23 * * *";
 
-    public Task Execute()
+    public async Task Execute()
     {
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 }
