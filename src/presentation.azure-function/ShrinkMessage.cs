@@ -84,9 +84,9 @@ public class ShrinkMessage
                 },
                 Temperature = 0f,
                 User = msg.User,
-                Model = Models.Model.Gpt_4.EnumToString(),
+                Model = Models.Model.Gpt_3_5_Turbo.EnumToString(),
             },
-            Models.Model.Gpt_4);
+            Models.Model.Gpt_3_5_Turbo);
         if (completionResult.Successful)
         {
             return completionResult.Choices[0].Message.Content;

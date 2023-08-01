@@ -171,9 +171,9 @@ public class UpdateHandler
                 Messages = gptMessage,
                 Temperature = 0f,
                 User = user,
-                Model = Models.Model.Gpt_4.EnumToString()
+                Model = Models.Model.Gpt_3_5_Turbo.EnumToString()
             },
-            Models.Model.Gpt_4,
+            Models.Model.Gpt_3_5_Turbo,
             cancellationToken: cancellation);
         _logger.LogInformation("Tokens: {@tokens}",
             new
