@@ -11,6 +11,7 @@ using Ungerfall.ChatGpt.TelegramBot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
 using Ungerfall.ChatGpt.TelegramBot.Database;
+using Ungerfall.ChatGpt.TelegramBot.TimedTasks;
 using Ungerfall.ChatGpt.TelegramBot.Worker;
 using Ungerfall.ChatGpt.TelegramBot.Worker.Services;
 
@@ -59,6 +60,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<ITokenCounter, TokenCounter>();
         services.AddScoped<IWhitelist, Whitelist>();
         services.AddScoped<TooLongDidNotReadToday>();
+        services.AddScoped<DailyTooLongDidNotReadToday>();
         services.AddScoped<GenerateImage>();
         services.AddScoped<UpdateHandler>();
         services.AddHostedService<PollingService>();
