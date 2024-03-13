@@ -112,7 +112,7 @@ public class ShrinkMessageTest
     }
 
     [Fact]
-    public async Task Run_ShouldNotUpdate_WhenShrunkMessageIsLonger()
+    public async Task Run_ShouldNotUpdate_WhenShrunkMessageIsLong()
     {
         // Arrange
         var loggerMock = new Mock<ILogger<ShrinkMessage>>();

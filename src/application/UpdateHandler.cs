@@ -4,6 +4,7 @@ using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -86,7 +87,12 @@ public class UpdateHandler
         {
             await _botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "Only for my chat.",
+                parseMode: ParseMode.Markdown,
+                text: $"""
+                Only for my chat.
+                You:
+                ```{JsonSerializer.Serialize(message.Chat, new JsonSerializerOptions { WriteIndented = true, MaxDepth = 3 })}```
+                """,
                 replyToMessageId: message.MessageId,
                 cancellationToken: cancellation);
             return;
