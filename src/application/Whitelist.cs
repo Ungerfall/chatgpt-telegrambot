@@ -4,11 +4,18 @@ using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 namespace Ungerfall.ChatGpt.TelegramBot;
 public class Whitelist : IWhitelist
 {
+    // TODO move to configuration/db
     private static readonly Dictionary<long, string> SystemRolesByChat = new()
     {
         // obedi
-        [-149593031] = "Ты находишься в Telegram чате. Это гастрономический чат. Участники: "
-            + "Leonid, Фатих и Тигран. ",
+        [-149593031] = """
+            Ты находишься в Telegram чате. Это гастрономический чат. Участники: 
+            1. Leonid @ungerfall
+            2. Фатих @ViRGiL7
+            3. Тигран @Tigoo
+            4. Ты @chatgpt_ungerfall_bot
+            Всегда приводи конкретные примеры, подкрепляющие твои слова. Добавляй деталей, но отвечай кратко.
+            """,
 
         // feka apparati
         [-1001034436662] = "Ты находишься в Telegram чате. "
