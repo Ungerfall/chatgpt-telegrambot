@@ -28,7 +28,6 @@ public class UpdateHandler
     private readonly TooLongDidNotReadToday _tooLongDidnotReadCommand;
     private readonly GenerateImage _imageCommand;
     private readonly IWhitelist _whitelist;
-    private readonly JsonSerializerOptions _intendedLowDepthJsonOptions = new() { WriteIndented = true, MaxDepth = 3 };
 
     public UpdateHandler(
         ITelegramBotClient botClient,
@@ -91,7 +90,7 @@ public class UpdateHandler
                 text: $"""
                 Only for my chat.
                 You:
-                ```{JsonSerializer.Serialize(message.Chat, _intendedLowDepthJsonOptions)}```
+                ```{JsonSerializer.Serialize(message.Chat, typeof(Chat), SourceGenerators.TelegramChatContext.Default)}```
                 """,
                 parseMode: ParseMode.Markdown,
                 replyToMessageId: message.MessageId,
