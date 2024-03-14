@@ -16,7 +16,7 @@ public sealed class ChatMessageBuilder :
 
     private ITokenCounter _tokenCounter = null!;
     private int _tokensSum;
-    private List<ChatMessage> _message = new();
+    private List<ChatMessage> _message = [];
 
     private ChatMessageBuilder()
     {
@@ -35,10 +35,7 @@ public sealed class ChatMessageBuilder :
 
     public IChatMessageBuilderAddMessagesState WithSystemRoleMessage(string msg)
     {
-        _message = new List<ChatMessage>
-        {
-            ChatMessage.FromSystem(msg),
-        };
+        _message = [ChatMessage.FromSystem(msg)];
         _tokensSum = _tokenCounter.Count(msg);
         return this;
     }
@@ -74,7 +71,7 @@ public sealed class ChatMessageBuilder :
 
     public ChatMessage[] Build()
     {
-        return _message.ToArray();
+        return [.. _message];
     }
 
     public bool CanAddMessage => _tokensSum <= MaxTokens;

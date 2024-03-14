@@ -38,7 +38,7 @@ public class DependencyInjectionTest
         foreach (var type in assemblies.SelectMany(x => x.GetTypes()).Where(type => type.IsClass))
         {
             // Skip anonymous types
-            if (type.GetCustomAttributes(typeof(CompilerGeneratedAttribute), inherit: false).Any())
+            if (type.GetCustomAttributes(typeof(CompilerGeneratedAttribute), inherit: false).Length != 0)
             {
                 continue;
             }
@@ -56,7 +56,7 @@ public class DependencyInjectionTest
                 }
                 catch (Exception ex)
                 {
-                    Assert.True(false, $"Failed to resolve dependencies of {ctorType.FullName} for {type.FullName}. Error: {ex.Message}");
+                    Assert.Fail($"Failed to resolve dependencies of {ctorType.FullName} for {type.FullName}. Error: {ex.Message}");
                 }
             }
         }

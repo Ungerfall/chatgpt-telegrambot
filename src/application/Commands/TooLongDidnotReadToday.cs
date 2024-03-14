@@ -122,7 +122,7 @@ public class TooLongDidNotReadToday
             });
         if (completionResult.Successful)
         {
-            return completionResult.Choices[0].Message.Content;
+            return completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content.";
         }
         else
         {

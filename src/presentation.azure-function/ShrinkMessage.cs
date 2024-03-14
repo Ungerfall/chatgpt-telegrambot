@@ -87,13 +87,8 @@ public class ShrinkMessage
                 Model = Models.Model.Gpt_3_5_Turbo.EnumToString(),
             },
             Models.Model.Gpt_3_5_Turbo);
-        if (completionResult.Successful)
-        {
-            return completionResult.Choices[0].Message.Content;
-        }
-        else
-        {
-            throw new InvalidOperationException("ChatGPT request wasn't successful");
-        }
+        return completionResult.Successful
+            ? completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content."
+            : throw new InvalidOperationException("ChatGPT request wasn't successful");
     }
 }

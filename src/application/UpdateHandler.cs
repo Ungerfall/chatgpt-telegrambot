@@ -28,6 +28,7 @@ public class UpdateHandler
     private readonly TooLongDidNotReadToday _tooLongDidnotReadCommand;
     private readonly GenerateImage _imageCommand;
     private readonly IWhitelist _whitelist;
+    private readonly JsonSerializerOptions _intendedLowDepthJsonOptions = new() { WriteIndented = true, MaxDepth = 3 };
 
     public UpdateHandler(
         ITelegramBotClient botClient,
@@ -87,12 +88,12 @@ public class UpdateHandler
         {
             await _botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                parseMode: ParseMode.Markdown,
                 text: $"""
                 Only for my chat.
                 You:
-                ```{JsonSerializer.Serialize(message.Chat, new JsonSerializerOptions { WriteIndented = true, MaxDepth = 3 })}```
+                ```{JsonSerializer.Serialize(message.Chat, _intendedLowDepthJsonOptions)}```
                 """,
+                parseMode: ParseMode.Markdown,
                 replyToMessageId: message.MessageId,
                 cancellationToken: cancellation);
             return;
@@ -191,7 +192,7 @@ public class UpdateHandler
             });
         if (completionResult.Successful)
         {
-            return (completionResult.Choices[0].Message.Content, completionResult.Usage?.TotalTokens);
+            return (completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content.", completionResult?.Usage?.TotalTokens);
         }
         else
         {
