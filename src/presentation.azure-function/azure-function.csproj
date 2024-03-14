@@ -8,8 +8,9 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Ungerfall.ChatGpt.TelegramBot.AzureFunction</RootNamespace>
     <PublishTrimmed>true</PublishTrimmed>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
-  <ItemGroup>
+    <ItemGroup>
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.17.4" />
     <PackageReference Include="Betalgo.OpenAI" Version="7.4.6" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.38.1" />

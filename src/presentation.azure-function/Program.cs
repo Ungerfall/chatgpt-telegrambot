@@ -6,13 +6,13 @@ using Microsoft.Extensions.Options;
 using OpenAI.Extensions;
 using OpenAI.ObjectModels;
 using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
 using Ungerfall.ChatGpt.TelegramBot.Database;
-using System.Text.Json;
 using Ungerfall.ChatGpt.TelegramBot.TimedTasks;
 
 var host = AzureFunctionHost.HostBuilder.Value;
@@ -60,7 +60,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                            EnvironmentVariableTarget.Process)
                            ?? throw new ArgumentException("CosmosDbConnectionString is missing");
                    });
-                   s.AddAzureClients(c =>c.AddServiceBusClient(Environment.GetEnvironmentVariable(
+                   s.AddAzureClients(c => c.AddServiceBusClient(Environment.GetEnvironmentVariable(
                        "ServiceBusConnection",
                        EnvironmentVariableTarget.Process)));
                    s.AddSingleton(sp =>
@@ -74,10 +74,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                                Serializer = new CosmosSystemTextJsonSerializer(new JsonSerializerOptions
                                {
                                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                                   Converters =
-                                   {
-                                    new JsonStringEnumConverter()
-                                   },
+                                   Converters = { new JsonStringEnumConverter() },
                                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                                })
                            });

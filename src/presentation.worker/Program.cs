@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 using OpenAI.Extensions;
 using OpenAI.ObjectModels;
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
@@ -52,7 +54,16 @@ IHost host = Host.CreateDefaultBuilder(args)
             var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
             return new CosmosClient(
                 opt.ConnectionString,
-                clientOptions: new CosmosClientOptions { MaxRetryAttemptsOnRateLimitedRequests = 3 });
+                clientOptions: new CosmosClientOptions
+                {
+                    MaxRetryAttemptsOnRateLimitedRequests = 3,
+                    Serializer = new CosmosSystemTextJsonSerializer(new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                        Converters = { new JsonStringEnumConverter() },
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    })
+                });
         });
         services.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
         services.AddScoped<PollingUpdateHandler>();

@@ -4,17 +4,18 @@ using Microsoft.Azure.Cosmos;
 using System.IO;
 using System.Text.Json;
 
-namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction;
+namespace Ungerfall.ChatGpt.TelegramBot;
 /// <summary>
 /// See https://github.com/Azure/azure-cosmos-dotnet-v3/blob/master/Microsoft.Azure.Cosmos.Samples/Usage/SystemTextJson/CosmosSystemTextJsonSerializer.cs
 /// </summary>
+[System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("This class uses reflection-based JSON serialization and deserialization that is not compatible with trimming.")]
 public class CosmosSystemTextJsonSerializer : CosmosSerializer
 {
-    private readonly JsonObjectSerializer systemTextJsonSerializer;
+    private readonly JsonObjectSerializer _systemTextJsonSerializer;
 
     public CosmosSystemTextJsonSerializer(JsonSerializerOptions jsonSerializerOptions)
     {
-        systemTextJsonSerializer = new JsonObjectSerializer(jsonSerializerOptions);
+        _systemTextJsonSerializer = new JsonObjectSerializer(jsonSerializerOptions);
     }
 
     public override T FromStream<T>(Stream stream)
@@ -32,14 +33,14 @@ public class CosmosSystemTextJsonSerializer : CosmosSerializer
                 return (T)(object)stream;
             }
 
-            return (T)systemTextJsonSerializer.Deserialize(stream, typeof(T), default);
+            return (T)_systemTextJsonSerializer.Deserialize(stream, typeof(T), default);
         }
     }
 
     public override Stream ToStream<T>(T input)
     {
         MemoryStream streamPayload = new();
-        systemTextJsonSerializer.Serialize(streamPayload, input, input.GetType(), default);
+        _systemTextJsonSerializer.Serialize(streamPayload, input, input.GetType(), default);
         streamPayload.Position = 0;
         return streamPayload;
     }
