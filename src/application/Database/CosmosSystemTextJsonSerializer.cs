@@ -3,6 +3,7 @@ using Azure.Core.Serialization;
 using Microsoft.Azure.Cosmos;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
 /// <summary>
@@ -13,9 +14,14 @@ public class CosmosSystemTextJsonSerializer : CosmosSerializer
 {
     private readonly JsonObjectSerializer _systemTextJsonSerializer;
 
-    public CosmosSystemTextJsonSerializer(JsonSerializerOptions jsonSerializerOptions)
+    public CosmosSystemTextJsonSerializer()
     {
-        _systemTextJsonSerializer = new JsonObjectSerializer(jsonSerializerOptions);
+        _systemTextJsonSerializer = new JsonObjectSerializer(new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new JsonStringEnumConverter() },
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        });
     }
 
     public override T FromStream<T>(Stream stream)

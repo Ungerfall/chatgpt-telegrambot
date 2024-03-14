@@ -57,12 +57,7 @@ IHost host = Host.CreateDefaultBuilder(args)
                 clientOptions: new CosmosClientOptions
                 {
                     MaxRetryAttemptsOnRateLimitedRequests = 3,
-                    Serializer = new CosmosSystemTextJsonSerializer(new JsonSerializerOptions
-                    {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        Converters = { new JsonStringEnumConverter() },
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                    })
+                    Serializer = new CosmosSystemTextJsonSerializer(),
                 });
         });
         services.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
