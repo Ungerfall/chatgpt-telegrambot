@@ -6,8 +6,6 @@ using Microsoft.Extensions.Options;
 using OpenAI.Extensions;
 using OpenAI.ObjectModels;
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.AzureFunction;

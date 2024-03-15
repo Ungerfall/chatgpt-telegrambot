@@ -1,29 +1,15 @@
 ﻿#nullable disable
-using Azure.Core.Serialization;
 using Microsoft.Azure.Cosmos;
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using Ungerfall.ChatGpt.TelegramBot.SourceGenerators;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
 /// <summary>
 /// See https://github.com/Azure/azure-cosmos-dotnet-v3/blob/master/Microsoft.Azure.Cosmos.Samples/Usage/SystemTextJson/CosmosSystemTextJsonSerializer.cs
 /// </summary>
-[System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("This class uses reflection-based JSON serialization and deserialization that is not compatible with trimming.")]
 public class CosmosSystemTextJsonSerializer : CosmosSerializer
 {
-    private readonly JsonObjectSerializer _systemTextJsonSerializer;
-
-    public CosmosSystemTextJsonSerializer()
-    {
-        _systemTextJsonSerializer = new JsonObjectSerializer(new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new JsonStringEnumConverter() },
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        });
-    }
-
     public override T FromStream<T>(Stream stream)
     {
         using (stream)
@@ -39,14 +25,17 @@ public class CosmosSystemTextJsonSerializer : CosmosSerializer
                 return (T)(object)stream;
             }
 
-            return (T)_systemTextJsonSerializer.Deserialize(stream, typeof(T), default);
+            using var memoryStream = new MemoryStream();
+            stream.CopyTo(memoryStream);
+            return (T)JsonSerializer.Deserialize(memoryStream.ToArray(), typeof(T), CosmosContext.Default);
         }
     }
 
     public override Stream ToStream<T>(T input)
     {
         MemoryStream streamPayload = new();
-        _systemTextJsonSerializer.Serialize(streamPayload, input, input.GetType(), default);
+        var buffer = JsonSerializer.SerializeToUtf8Bytes(input, input.GetType(), CosmosContext.Default);
+        streamPayload.Write(buffer, 0, buffer.Length);
         streamPayload.Position = 0;
         return streamPayload;
     }
