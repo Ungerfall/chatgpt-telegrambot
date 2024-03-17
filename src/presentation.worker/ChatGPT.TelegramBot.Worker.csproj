@@ -5,7 +5,6 @@
     <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-ChatGPT.TelegramBot.Worker-02d9c93d-3749-44aa-b1da-d83b5eba8196</UserSecretsId>
     <RootNamespace>Ungerfall.ChatGpt.TelegramBot.Worker</RootNamespace>
-    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
 
   <ItemGroup>
