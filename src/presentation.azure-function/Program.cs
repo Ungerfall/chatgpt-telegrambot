@@ -57,6 +57,10 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                            "CosmosDbConnectionString",
                            EnvironmentVariableTarget.Process)
                            ?? throw new ArgumentException("CosmosDbConnectionString is missing");
+                       opt.TimedTasksContainerId = Environment.GetEnvironmentVariable(
+                           "CosmosTimedTasksContainer",
+                           EnvironmentVariableTarget.Process)
+                           ?? throw new ArgumentException("CosmosTimedTasksContainer is missing");
                    });
                    s.AddAzureClients(c => c.AddServiceBusClient(Environment.GetEnvironmentVariable(
                        "ServiceBusConnection",

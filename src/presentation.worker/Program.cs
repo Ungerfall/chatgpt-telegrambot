@@ -30,6 +30,7 @@ IHost host = Host.CreateDefaultBuilder(args)
             opt.DatabaseId = context.Configuration["CosmosDatabase"] ?? throw new ArgumentNullException(nameof(context));
             opt.MessagesContainerId = context.Configuration["CosmosTelegramMessagesContainer"] ?? throw new ArgumentNullException(nameof(context));
             opt.ConnectionString = context.Configuration["CosmosDbConnectionString"] ?? throw new ArgumentNullException(nameof(context));
+            opt.TimedTasksContainerId = context.Configuration["CosmosTimedTasksContainer"] ?? throw new ArgumentNullException(nameof(context));
         });
 
         services.AddHttpClient("telegram_bot_client")

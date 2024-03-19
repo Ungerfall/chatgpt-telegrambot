@@ -7,5 +7,5 @@ namespace Ungerfall.ChatGpt.TelegramBot.Abstractions;
 public interface ITimedTaskExecutionRepository
 {
     Task Create(TimedTaskExecution timedTask, CancellationToken cancellation);
-    Task<bool> Exists(string name, DateTime date, CancellationToken cancellation);
+    Task<bool> Exists(long chatId, string name, DateTime date, CancellationToken cancellation);
 }
