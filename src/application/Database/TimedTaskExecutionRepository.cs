@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
+using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
 using System.Threading;
@@ -9,11 +10,13 @@ using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 namespace Ungerfall.ChatGpt.TelegramBot.Database;
 public class TimedTaskExecutionRepository(
     CosmosClient cosmos,
-    CosmosDbOptions options) : ITimedTaskExecutionRepository
+    IOptions<CosmosDbOptions> options) : ITimedTaskExecutionRepository
 {
+    private readonly CosmosDbOptions _cosmosDbOptions = options.Value;
+
     public async Task Create(TimedTaskExecution timedTask, CancellationToken cancellation)
     {
-        var container = cosmos.GetContainer(options.DatabaseId, options.MessagesContainerId);
+        var container = cosmos.GetContainer(_cosmosDbOptions.DatabaseId, _cosmosDbOptions.MessagesContainerId);
         await container.CreateItemAsync(
             timedTask,
             new PartitionKey(timedTask.ChatId),
@@ -26,7 +29,7 @@ public class TimedTaskExecutionRepository(
 
     public async Task<bool> Exists(long chatId, string name, DateTime date, CancellationToken cancellation)
     {
-        var container = cosmos.GetContainer(options.DatabaseId, options.MessagesContainerId);
+        var container = cosmos.GetContainer(_cosmosDbOptions.DatabaseId, _cosmosDbOptions.MessagesContainerId);
         DateTime startOfDay = date.Date;
         DateTime startOfNextDay = startOfDay.AddDays(1d);
         return await container.GetItemLinqQueryable<TimedTaskExecution>(

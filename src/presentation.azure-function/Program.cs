@@ -10,6 +10,7 @@ using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
+using Ungerfall.ChatGpt.TelegramBot.Configuration;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.TimedTasks;
 
@@ -81,8 +82,10 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                    s.AddScoped<IWhitelist, Whitelist>();
                    s.AddScoped<TooLongDidNotReadToday>();
                    s.AddScoped<DailyTooLongDidNotReadToday>();
+                   s.AddScoped<DailyQuiz>();
                    s.AddScoped<GenerateImage>();
                    s.AddScoped<UpdateHandler>();
+                   s.AddSingleton<TestUsers>();
                })
                .Build();
         }

@@ -12,6 +12,7 @@ public class DependencyInjectionTest
         Environment.SetEnvironmentVariable("OPENAI_ORG", Guid.NewGuid().ToString(), EnvironmentVariableTarget.Process);
         Environment.SetEnvironmentVariable("CosmosDatabase", Guid.NewGuid().ToString(), EnvironmentVariableTarget.Process);
         Environment.SetEnvironmentVariable("CosmosTelegramMessagesContainer", Guid.NewGuid().ToString(), EnvironmentVariableTarget.Process);
+        Environment.SetEnvironmentVariable("CosmosTimedTasksContainer", Guid.NewGuid().ToString(), EnvironmentVariableTarget.Process);
         Environment.SetEnvironmentVariable(
             "CosmosDbConnectionString",
             "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==;",
@@ -39,6 +40,12 @@ public class DependencyInjectionTest
         {
             // Skip anonymous types
             if (type.GetCustomAttributes(typeof(CompilerGeneratedAttribute), inherit: false).Length != 0)
+            {
+                continue;
+            }
+
+            // Skip weird names
+            if (type.Name.StartsWith("<>"))
             {
                 continue;
             }

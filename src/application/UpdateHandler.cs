@@ -13,6 +13,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
+using Ungerfall.ChatGpt.TelegramBot.Configuration;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
 
@@ -28,6 +29,7 @@ public class UpdateHandler
     private readonly TooLongDidNotReadToday _tooLongDidnotReadCommand;
     private readonly GenerateImage _imageCommand;
     private readonly IWhitelist _whitelist;
+    private readonly TestUsers _testUsers;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
@@ -37,7 +39,8 @@ public class UpdateHandler
         ITokenCounter tokenCounter,
         TooLongDidNotReadToday tooLongDidnotReadCommand,
         IWhitelist whitelist,
-        GenerateImage imageCommand)
+        GenerateImage imageCommand,
+        TestUsers testUsers)
     {
         _botClient = botClient;
         _logger = logger;
@@ -47,6 +50,7 @@ public class UpdateHandler
         _tooLongDidnotReadCommand = tooLongDidnotReadCommand;
         _whitelist = whitelist;
         _imageCommand = imageCommand;
+        _testUsers = testUsers;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -83,7 +87,9 @@ public class UpdateHandler
         if (message.Text is not { } messageText)
             return;
 
-        if (!_whitelist.IsGroupAllowedToUseBot(message.Chat.Id))
+        bool allowed = _whitelist.IsGroupAllowedToUseBot(message.Chat.Id)
+            || _testUsers.Get().Contains(message.Chat.Id);
+        if (!allowed)
         {
             await _botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
