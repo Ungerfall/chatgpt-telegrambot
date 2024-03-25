@@ -120,13 +120,19 @@ public class UpdateHandler
 
     private async Task<Message> OnMessageReceived(Message msg, string messageText, CancellationToken cancellation)
     {
-        bool containMention = msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
-        bool isBotMentioned = containMention && (msg.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false);
+        bool activateBot = msg switch
+        {
+            var m when m.Chat.Type == ChatType.Group
+                && (msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false)
+                && (msg.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false) => true,
+            { Chat.Type: ChatType.Private } => true,
+            _ => false,
+        };
         var user = msg.From?.FirstName ?? msg.From?.Username ?? "unknown";
         var chatId = msg.Chat.Id;
-        if (!isBotMentioned)
+        if (!activateBot)
         {
-            _logger.LogInformation("The message does not contain mention of bot.");
+            _logger.LogInformation("Bot action is not expected");
             _ = SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
             return msg;
         }
