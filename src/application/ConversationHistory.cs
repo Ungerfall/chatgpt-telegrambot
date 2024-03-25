@@ -1,4 +1,4 @@
-﻿using OpenAI.GPT3.ObjectModels.RequestModels;
+﻿using OpenAI.ObjectModels.RequestModels;
 using System.Threading;
 using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;

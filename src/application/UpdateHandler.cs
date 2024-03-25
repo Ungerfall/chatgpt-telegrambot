@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
-using OpenAI.GPT3.Interfaces;
-using OpenAI.GPT3.ObjectModels.RequestModels;
+using OpenAI.Interfaces;
+using OpenAI.ObjectModels;
+using OpenAI.ObjectModels.RequestModels;
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -11,6 +13,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
+using Ungerfall.ChatGpt.TelegramBot.Configuration;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
 
@@ -23,9 +26,10 @@ public class UpdateHandler
     private readonly IOpenAIService _openAiService;
     private readonly ITelegramMessageRepository _telegramMessagesRepository;
     private readonly ITokenCounter _tokenCounter;
-    private readonly TooLongDidnotReadToday _tooLongDidnotReadCommand;
+    private readonly TooLongDidNotReadToday _tooLongDidnotReadCommand;
     private readonly GenerateImage _imageCommand;
     private readonly IWhitelist _whitelist;
+    private readonly TestUsers _testUsers;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
@@ -33,9 +37,10 @@ public class UpdateHandler
         IOpenAIService openAiService,
         ITelegramMessageRepository telegramMessagesRepository,
         ITokenCounter tokenCounter,
-        TooLongDidnotReadToday tooLongDidnotReadCommand,
+        TooLongDidNotReadToday tooLongDidnotReadCommand,
         IWhitelist whitelist,
-        GenerateImage imageCommand)
+        GenerateImage imageCommand,
+        TestUsers testUsers)
     {
         _botClient = botClient;
         _logger = logger;
@@ -45,6 +50,7 @@ public class UpdateHandler
         _tooLongDidnotReadCommand = tooLongDidnotReadCommand;
         _whitelist = whitelist;
         _imageCommand = imageCommand;
+        _testUsers = testUsers;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -81,11 +87,18 @@ public class UpdateHandler
         if (message.Text is not { } messageText)
             return;
 
-        if (!_whitelist.IsGroupAllowedToUseBot(message.Chat.Id))
+        bool allowed = _whitelist.IsGroupAllowedToUseBot(message.Chat.Id)
+            || _testUsers.Get().Contains(message.Chat.Id);
+        if (!allowed)
         {
             await _botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "Only for my chat.",
+                text: $"""
+                Only for my chat.
+                You:
+                ```{JsonSerializer.Serialize(message.Chat, typeof(Chat), SourceGenerators.TelegramChatContext.Default)}```
+                """,
+                parseMode: ParseMode.Markdown,
                 replyToMessageId: message.MessageId,
                 cancellationToken: cancellation);
             return;
@@ -107,13 +120,19 @@ public class UpdateHandler
 
     private async Task<Message> OnMessageReceived(Message msg, string messageText, CancellationToken cancellation)
     {
-        bool containMention = msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false;
-        bool isBotMentioned = containMention && (msg.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false);
+        bool activateBot = msg switch
+        {
+            var m when m.Chat.Type == ChatType.Group
+                && (msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false)
+                && (msg.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false) => true,
+            { Chat.Type: ChatType.Private } => true,
+            _ => false,
+        };
         var user = msg.From?.FirstName ?? msg.From?.Username ?? "unknown";
         var chatId = msg.Chat.Id;
-        if (!isBotMentioned)
+        if (!activateBot)
         {
-            _logger.LogInformation("The message does not contain mention of bot.");
+            _logger.LogInformation("Bot action is not expected");
             _ = SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
             return msg;
         }
@@ -129,7 +148,7 @@ public class UpdateHandler
             replyToMessageId: msg.MessageId,
             cancellationToken: cancellation);
         await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
-        await SaveToHistory(chatId, UserId(sent), sent.Text!, sent.MessageId, sent.Date, user, cancellation);
+        await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.MessageId, sent.Date, user, cancellation);
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sent.MessageId);
         return sent;
 
@@ -164,13 +183,15 @@ public class UpdateHandler
 
         var history = new ConversationHistory(_telegramMessagesRepository, $"{user}: {message}", _tokenCounter, _whitelist);
         var (gptMessage, tokensCount) = await history.GetForChatGpt(chatId, cancellation);
-        var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
+        var completionResult = await _openAiService.ChatCompletion.Create(
             new ChatCompletionCreateRequest
             {
                 Messages = gptMessage,
                 Temperature = 0f,
                 User = user,
+                Model = Models.Model.Gpt_3_5_Turbo.EnumToString()
             },
+            Models.Model.Gpt_3_5_Turbo,
             cancellationToken: cancellation);
         _logger.LogInformation("Tokens: {@tokens}",
             new
@@ -182,7 +203,7 @@ public class UpdateHandler
             });
         if (completionResult.Successful)
         {
-            return (completionResult.Choices[0].Message.Content, completionResult.Usage?.TotalTokens);
+            return (completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content.", completionResult?.Usage?.TotalTokens);
         }
         else
         {
@@ -199,13 +220,13 @@ public class UpdateHandler
 
     public async Task HandlePollingErrorAsync(Exception exception, CancellationToken cancellationToken)
     {
-        var ErrorMessage = exception switch
+        var errorMessage = exception switch
         {
             ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
             _ => exception.ToString()
         };
 
-        _logger.LogInformation("HandleError: {ErrorMessage}", ErrorMessage);
+        _logger.LogInformation("HandleError: {ErrorMessage}", errorMessage);
 
         // Cooldown in case of network connection error
         if (exception is RequestException)

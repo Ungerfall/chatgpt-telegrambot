@@ -1,4 +1,4 @@
-﻿using OpenAI.GPT3.ObjectModels.RequestModels;
+﻿using OpenAI.ObjectModels.RequestModels;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 
@@ -18,4 +18,5 @@ public interface IChatMessageBuilderAddMessagesState
     ChatMessage[] Build();
     bool CanAddMessage { get; }
     int TokensCount { get; }
+    bool ContainsUserMessage { get; }
 }

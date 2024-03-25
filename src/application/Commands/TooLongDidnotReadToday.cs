@@ -1,30 +1,34 @@
 ﻿using Microsoft.Extensions.Logging;
-using OpenAI.GPT3.Interfaces;
-using OpenAI.GPT3.ObjectModels.RequestModels;
+using OpenAI.Interfaces;
+using OpenAI.ObjectModels;
+using OpenAI.ObjectModels.RequestModels;
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
+using static System.Environment;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Commands;
-public class TooLongDidnotReadToday
+public class TooLongDidNotReadToday
 {
-    private const string AskForTLDR = "Напиши TL;DR всей истории переписки. Выведи статистику по пользователям. Избегай обобщений.";
+    private const string AskForTLDR = "Напиши TL;DR переписки маркированным списком.";
     private readonly ITelegramMessageRepository _history;
     private readonly ITokenCounter _tokenCounter;
     private readonly ITelegramBotClient _botClient;
     private readonly IOpenAIService _openAiService;
-    private readonly ILogger<TooLongDidnotReadToday> _logger;
+    private readonly ILogger<TooLongDidNotReadToday> _logger;
     private readonly IWhitelist _whitelist;
 
-    public TooLongDidnotReadToday(
+    public TooLongDidNotReadToday(
         ITelegramMessageRepository history,
         ITokenCounter tokenCounter,
         IOpenAIService openAiService,
-        ILogger<TooLongDidnotReadToday> logger,
+        ILogger<TooLongDidNotReadToday> logger,
         ITelegramBotClient botClient,
         IWhitelist whitelist)
     {
@@ -42,9 +46,16 @@ public class TooLongDidnotReadToday
             chatId: message.Chat.Id,
             ChatAction.Typing,
             cancellationToken: cancellation);
-        var gptRequest = await CreateGptRequest(message, cancellation);
-        var telegramMessage = await SendGptRequest(gptRequest, cancellation);
-        telegramMessage = $"{telegramMessage}{Environment.NewLine}TL;DR не записывается в историю";
+        var gptTasks = new List<Task<string>>();
+        await foreach (var r in CreateGptRequest(message, cancellation))
+        {
+            gptTasks.Add(SendGptRequest(r, cancellation));
+        }
+
+        var summaries = await Task.WhenAll(gptTasks);
+        var telegramMessage = summaries.Length == 0
+            ? "Сегодня ничего не произошло"
+            : $"{string.Join(NewLine, summaries)}{NewLine}TL;DR не записывается в историю";
         return await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: telegramMessage,
@@ -52,8 +63,11 @@ public class TooLongDidnotReadToday
             cancellationToken: cancellation);
     }
 
-    private async Task<ChatCompletionCreateRequest> CreateGptRequest(Message message, CancellationToken cancellation)
+    private async IAsyncEnumerable<ChatCompletionCreateRequest> CreateGptRequest(
+        Message message,
+        [EnumeratorCancellation] CancellationToken cancellation)
     {
+        const float temperature = .2f;
         var user = message.From?.Username ?? "unknown";
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var mb = ChatMessageBuilder.Create()
@@ -63,27 +77,41 @@ public class TooLongDidnotReadToday
         {
             if (!mb.CanAddMessage)
             {
-                break;
+                mb.AddUserMessage(AskForTLDR);
+                _logger.LogInformation("My tokens counter: {tokens}", mb.TokensCount);
+                yield return new ChatCompletionCreateRequest
+                {
+                    Messages = mb.Build(),
+                    Temperature = temperature,
+                    User = user,
+                    Model = Models.Model.Gpt_4.EnumToString(),
+                };
             }
 
             mb.AddMessage(h, 1); // because of descending order of items in history
         }
 
+        if (!mb.ContainsUserMessage)
+        {
+            yield break;
+        }
+
         mb.AddUserMessage(AskForTLDR);
         var gptMessage = mb.Build();
-        _logger.LogInformation("My tokens counter: {tokens}", mb.TokensCount);
-        return new ChatCompletionCreateRequest
+        yield return new ChatCompletionCreateRequest
         {
             Messages = gptMessage,
-            Temperature = 0f,
+            Temperature = temperature,
             User = user,
+            Model = Models.Model.Gpt_4.EnumToString(),
         };
     }
 
     private async Task<string> SendGptRequest(ChatCompletionCreateRequest request, CancellationToken cancellation)
     {
-        var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
+        var completionResult = await _openAiService.ChatCompletion.Create(
             request,
+            Models.Model.Gpt_4,
             cancellationToken: cancellation);
         _logger.LogInformation("Tokens: {@tokens}",
             new
@@ -94,7 +122,7 @@ public class TooLongDidnotReadToday
             });
         if (completionResult.Successful)
         {
-            return completionResult.Choices[0].Message.Content;
+            return completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content.";
         }
         else
         {

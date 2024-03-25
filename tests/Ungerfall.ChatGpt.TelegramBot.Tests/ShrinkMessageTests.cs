@@ -1,10 +1,10 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Moq;
-using OpenAI.GPT3.Interfaces;
-using OpenAI.GPT3.ObjectModels.RequestModels;
-using OpenAI.GPT3.ObjectModels.ResponseModels;
-using OpenAI.GPT3.ObjectModels.SharedModels;
+using OpenAI.Interfaces;
+using OpenAI.ObjectModels.RequestModels;
+using OpenAI.ObjectModels.ResponseModels;
+using OpenAI.ObjectModels.SharedModels;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.AzureFunction;
 using Ungerfall.ChatGpt.TelegramBot.Database;
@@ -112,7 +112,7 @@ public class ShrinkMessageTest
     }
 
     [Fact]
-    public async Task Run_ShouldNotUpdate_WhenShrunkMessageIsLonger()
+    public async Task Run_ShouldNotUpdate_WhenShrunkMessageIsLong()
     {
         // Arrange
         var loggerMock = new Mock<ILogger<ShrinkMessage>>();
@@ -163,5 +163,4 @@ public class ShrinkMessageTest
             repo => repo.Update(It.IsAny<TelegramMessage>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
-
 }

@@ -1,17 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>Ungerfall.ChatGpt.TelegramBot</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.14.0" />
-    <PackageReference Include="Betalgo.OpenAI" Version="6.8.6" />
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.34.0" />
-    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.6.3" />
-    <PackageReference Include="SharpToken" Version="1.0.28" />
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.17.4" />
+    <PackageReference Include="Betalgo.OpenAI" Version="7.4.6" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.38.1" />
+    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.2" />
+    <PackageReference Include="SharpToken" Version="1.2.17" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="chatgpt-prompts.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -9,7 +9,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatGPT.TelegramBot.Worker"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ungerfall.ChatGpt.TelegramBot", "application\Ungerfall.ChatGpt.TelegramBot.csproj", "{A3F5C307-294A-46EF-968E-91AD6054BE1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ungerfall.ChatGpt.TelegramBot.Tests", "..\tests\Ungerfall.ChatGpt.TelegramBot.Tests\Ungerfall.ChatGpt.TelegramBot.Tests.csproj", "{C72B4EBB-2A2C-4840-91B3-8C4A22E21D38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ungerfall.ChatGpt.TelegramBot.Tests", "..\tests\Ungerfall.ChatGpt.TelegramBot.Tests\Ungerfall.ChatGpt.TelegramBot.Tests.csproj", "{C72B4EBB-2A2C-4840-91B3-8C4A22E21D38}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F92E96FA-819C-4D8D-9DDA-B1817CD40F58}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

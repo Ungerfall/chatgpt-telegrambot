@@ -1,7 +1,8 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using OpenAI.GPT3.Interfaces;
-using OpenAI.GPT3.ObjectModels.RequestModels;
+using OpenAI.Interfaces;
+using OpenAI.ObjectModels;
+using OpenAI.ObjectModels.RequestModels;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -68,7 +69,7 @@ public class ShrinkMessage
 
     private async Task<string> AskChatGptToShrink(TelegramMessage msg)
     {
-        var completionResult = await _openAiService.ChatCompletion.CreateCompletion(
+        var completionResult = await _openAiService.ChatCompletion.Create(
             new ChatCompletionCreateRequest
             {
                 Messages = new[]
@@ -83,14 +84,11 @@ public class ShrinkMessage
                 },
                 Temperature = 0f,
                 User = msg.User,
-            });
-        if (completionResult.Successful)
-        {
-            return completionResult.Choices[0].Message.Content;
-        }
-        else
-        {
-            throw new InvalidOperationException("ChatGPT request wasn't successful");
-        }
+                Model = Models.Model.Gpt_3_5_Turbo.EnumToString(),
+            },
+            Models.Model.Gpt_3_5_Turbo);
+        return completionResult.Successful
+            ? completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content."
+            : throw new InvalidOperationException("ChatGPT request wasn't successful");
     }
 }

@@ -1,4 +1,5 @@
-﻿using OpenAI.GPT3.ObjectModels.RequestModels;
+﻿using OpenAI.ObjectModels;
+using OpenAI.ObjectModels.RequestModels;
 using System.Collections.Generic;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Database;
@@ -11,11 +12,11 @@ public sealed class ChatMessageBuilder :
     IChatMessageBuilderAddMessagesState
 {
     private const string BotUser = "chatgpt_ungerfall_bot";
-    private const double MaxTokens = 4096 * 0.7; // .3 if left for a gpt response
+    private const double MaxTokens = 4096 * 0.4; // .3 is left for a gpt response
 
     private ITokenCounter _tokenCounter = null!;
     private int _tokensSum;
-    private List<ChatMessage> _message = new();
+    private List<ChatMessage> _message = [];
 
     private ChatMessageBuilder()
     {
@@ -34,10 +35,7 @@ public sealed class ChatMessageBuilder :
 
     public IChatMessageBuilderAddMessagesState WithSystemRoleMessage(string msg)
     {
-        _message = new List<ChatMessage>
-        {
-            ChatMessage.FromSystem(msg),
-        };
+        _message = [ChatMessage.FromSystem(msg)];
         _tokensSum = _tokenCounter.Count(msg);
         return this;
     }
@@ -73,10 +71,12 @@ public sealed class ChatMessageBuilder :
 
     public ChatMessage[] Build()
     {
-        return _message.ToArray();
+        return [.. _message];
     }
 
     public bool CanAddMessage => _tokensSum <= MaxTokens;
 
     public int TokensCount => _tokensSum;
+
+    public bool ContainsUserMessage => _message.Exists(x => x.Role == StaticValues.ChatMessageRoles.User);
 }
