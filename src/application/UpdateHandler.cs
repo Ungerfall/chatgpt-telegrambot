@@ -148,7 +148,7 @@ public class UpdateHandler
             replyToMessageId: msg.MessageId,
             cancellationToken: cancellation);
         await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
-        await SaveToHistory(chatId, UserId(sent), sent.Text!, sent.MessageId, sent.Date, user, cancellation);
+        await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.MessageId, sent.Date, user, cancellation);
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sent.MessageId);
         return sent;
 
