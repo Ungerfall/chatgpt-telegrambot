@@ -13,21 +13,18 @@ public class DailyQuiz(QuizChats quizChats, ITelegramBotClient botClient)
         {
             await botClient.SendPollAsync(
                 chatId: chatId,
-                question: "Какая из этих сортировок является примером алгоритма сортировки слиянием?",
+                question: "Что такое HTTP?",
                 options:
                 [
-                    "Пирамидальная сортировка",
-                    "Сортировка Шелла",
-                    "Быстрая сортировка",
-                    "Сортировка выбором",
-                    "Сортировка вставками",
+                    "Hyper Text Markup Language",
+                    "Hyperlinks and Text Transfer Protocol",
+                    "Home Tool Markup Language",
+                    "Hyper Text Transfer Protocol",
                 ],
                 type: Telegram.Bot.Types.Enums.PollType.Quiz,
-                correctOptionId: 4,
-                explanation: @"Сортировка вставками (Insertion Sort) эффективна для небольших данных или когда большая 
-часть элементов списка уже упорядочена. Это связано с тем, что она проходит через список, оставляя упорядоченную 
-последовательность за собой, и эффективно работает с почти упорядоченными данными, 
-минимизируя количество необходимых перемещений.",
+                correctOptionId: 3,
+                explanation: @"HTTP - это протокол передачи гипертекста, 
+используемый для передачи данных веб-страниц между веб-сервером и клиентским браузером.",
                 explanationParseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
         }
     }
