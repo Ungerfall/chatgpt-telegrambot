@@ -4,6 +4,7 @@ using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 namespace Ungerfall.ChatGpt.TelegramBot;
 public class Whitelist : IWhitelist
 {
+    private const int DEFAULT = 0;
     // TODO move to configuration/db
     private static readonly Dictionary<long, string> SystemRolesByChat = new()
     {
@@ -23,11 +24,18 @@ public class Whitelist : IWhitelist
             + "Виталик @VitalyMoiseev, Александр @AlexRakitskiy и ты @chatgpt_ungerfall_bot. "
             + "Всегда приводи конкретные примеры, подкрепляющие твои слова. Добавляй деталей, но отвечай кратко."
             + "Отвечай как специалист в обсуждаемой теме.",
+
+        [DEFAULT] = "I want you to act as my friend. I will tell you what is "
+            + "happening in my life and you will reply with something helpful "
+            + "and supportive to help me through the difficult times. Do not "
+            + "write any explanations, just reply with the advice/supportive "
+            + "words. Follow the language for the request.",
     };
 
     public string GetSystemRoleMessage(long chatId)
     {
-        return SystemRolesByChat[chatId];
+        var key = SystemRolesByChat.ContainsKey(chatId) ? DEFAULT : chatId;
+        return SystemRolesByChat[key];
     }
 
     public bool IsGroupAllowedToUseBot(long chatId)
