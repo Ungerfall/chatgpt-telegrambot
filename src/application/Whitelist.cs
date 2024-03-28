@@ -29,12 +29,12 @@ public class Whitelist : IWhitelist
             + "happening in my life and you will reply with something helpful "
             + "and supportive to help me through the difficult times. Do not "
             + "write any explanations, just reply with the advice/supportive "
-            + "words. Follow the language for the request.",
+            + "words. Follow the language of the request.",
     };
 
     public string GetSystemRoleMessage(long chatId)
     {
-        var key = SystemRolesByChat.ContainsKey(chatId) ? DEFAULT : chatId;
+        var key = SystemRolesByChat.ContainsKey(chatId) ? chatId : DEFAULT;
         return SystemRolesByChat[key];
     }
 
