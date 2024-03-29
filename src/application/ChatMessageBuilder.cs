@@ -27,9 +27,9 @@ public sealed class ChatMessageBuilder :
         return new ChatMessageBuilder();
     }
 
-    public IChatMessageBuilderSystemRoleState WithTokenCounter(ITokenCounter counter)
+    public IChatMessageBuilderSystemRoleState WithTokenCounter(ITokenCounter? counter = null)
     {
-        _tokenCounter = counter;
+        _tokenCounter = counter ?? new TokenCounter();
         return this;
     }
 
