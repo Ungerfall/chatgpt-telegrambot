@@ -9,4 +9,5 @@ namespace Ungerfall.ChatGpt.TelegramBot.SourceGenerators;
 [JsonSerializable(typeof(Database.TelegramMessage[]))]
 [JsonSerializable(typeof(Database.TimedTaskExecution))]
 [JsonSerializable(typeof(Database.TimedTaskExecution[]))]
+[JsonSerializable(typeof(int[]))]
 internal partial class CosmosContext : JsonSerializerContext;
