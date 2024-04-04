@@ -10,8 +10,8 @@ namespace Ungerfall.ChatGpt.TelegramBot.TimedTasks;
 public abstract class TimedTask
 {
     protected readonly ITelegramBotClient _botClient;
+    protected readonly ITimedTaskExecutionRepository _repo;
 
-    private readonly ITimedTaskExecutionRepository _repo;
     private readonly ILogger _logger;
 
     internal TimedTask(ITimedTaskExecutionRepository repo, ITelegramBotClient botClient, ILogger logger)

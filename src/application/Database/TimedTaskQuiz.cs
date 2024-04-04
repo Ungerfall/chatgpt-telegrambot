@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Ungerfall.ChatGpt.TelegramBot.Database;
 public class TimedTaskQuiz
 {
-    public const string TimedTaskQuiz_ComputerScience = "quiz-type-cs";
+    public const string Type_ComputerScience = "quiz-type-cs";
 
     [JsonPropertyName("id")]
     public string Id { get; init; } = null!;

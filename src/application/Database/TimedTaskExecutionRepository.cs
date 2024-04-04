@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
@@ -57,6 +58,7 @@ public class TimedTaskExecutionRepository(
             .WithParameter("@end", startOfNextDay);
 
         using var it = container.GetItemQueryIterator<TimedTaskExecution>(
+            query,
             requestOptions: new QueryRequestOptions
             {
                 MaxConcurrency = 1,
@@ -68,5 +70,39 @@ public class TimedTaskExecutionRepository(
         }
 
         return false;
+    }
+    public async Task<TimedTaskQuiz?> GetQuiz(long chatId, string type, CancellationToken cancellation)
+    {
+        var container = cosmos.GetContainer(_cosmosDbOptions.DatabaseId, _cosmosDbOptions.TimedTasksContainerId);
+        var query = new QueryDefinition(@"SELECT * FROM c
+                WHERE (NOT IS_DEFINED(c.posted) OR c.posted = false)
+                    AND c.chatId = @chatId
+                    AND c.type = @type
+                ORDER BY c._ts
+                OFFSET 0 LIMIT 1")
+            .WithParameter("@type", type)
+            .WithParameter("@chatId", chatId);
+        using var it = container.GetItemQueryIterator<TimedTaskQuiz>(
+            query,
+            requestOptions: new QueryRequestOptions
+            {
+                MaxConcurrency = 1,
+                PartitionKey = new PartitionKey(chatId),
+            });
+        while (it.HasMoreResults)
+        {
+            FeedResponse<TimedTaskQuiz> response = await it.ReadNextAsync(cancellation);
+            return response.FirstOrDefault();
+        }
+
+        return null;
+    }
+
+    public async Task CompleteQuiz(TimedTaskQuiz quiz, CancellationToken cancellation)
+    {
+        var container = cosmos.GetContainer(_cosmosDbOptions.DatabaseId, _cosmosDbOptions.TimedTasksContainerId);
+        quiz.Posted = true;
+        quiz.DateUtc = DateTime.UtcNow;
+        await container.ReplaceItemAsync(quiz, quiz.Id, new PartitionKey(quiz.ChatId), cancellationToken: cancellation);
     }
 }
