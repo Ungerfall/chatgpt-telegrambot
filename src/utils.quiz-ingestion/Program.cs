@@ -58,7 +58,7 @@ rootCommand.SetHandler(async file =>
     var openAiApiKey = MaskInput("Enter your Open AI API key");
     var cosmosDbConn = MaskInput("Enter your cosmos db connection string");
     Console.WriteLine("Enter comma-separated chat ids:");
-    long[] chats = Console.ReadLine().Split(',').Select(long.Parse).ToArray();
+    long[] chats = (Console.ReadLine() ?? string.Empty).Split(',').Select(long.Parse).ToArray();
     var openAiService = new OpenAIService(new OpenAI.OpenAiOptions
     {
         ApiKey = openAiApiKey,
@@ -93,7 +93,7 @@ rootCommand.SetHandler(async file =>
              CorrectOptionId = quiz.CorrectOptionId,
              Options = quiz.Options,
              Question = quiz.Question,
-             Type = TimedTaskQuiz.TimedTaskQuiz_ComputerScience,
+             Type = TimedTaskQuiz.Type_ComputerScience,
              Explanation = quiz.Explanation,
              Id = Guid.NewGuid().ToString(),
              DateUtc = DateTime.UtcNow,
