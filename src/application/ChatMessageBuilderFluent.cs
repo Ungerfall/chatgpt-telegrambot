@@ -5,7 +5,7 @@ using Ungerfall.ChatGpt.TelegramBot.Database;
 namespace Ungerfall.ChatGpt.TelegramBot;
 public interface IChatMessageBuilderTokenCounterState
 {
-    IChatMessageBuilderSystemRoleState WithTokenCounter(ITokenCounter counter);
+    IChatMessageBuilderSystemRoleState WithTokenCounter(ITokenCounter? counter = null);
 }
 public interface IChatMessageBuilderSystemRoleState
 {

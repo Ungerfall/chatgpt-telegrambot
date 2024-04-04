@@ -78,6 +78,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                            });
                    });
                    s.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
+                   s.AddScoped<ITimedTaskExecutionRepository, TimedTaskExecutionRepository>();
                    s.AddScoped<ITokenCounter, TokenCounter>();
                    s.AddScoped<IWhitelist, Whitelist>();
                    s.AddScoped<TooLongDidNotReadToday>();

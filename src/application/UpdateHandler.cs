@@ -122,7 +122,10 @@ public class UpdateHandler
     {
         bool activateBot = msg switch
         {
-            var m when m.Chat.Type == ChatType.Group
+            var m when (m.Chat.Type == ChatType.Group)
+                && (msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false)
+                && (msg.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false) => true,
+            var m when (m.Chat.Type == ChatType.Supergroup)
                 && (msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false)
                 && (msg.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false) => true,
             { Chat.Type: ChatType.Private } => true,

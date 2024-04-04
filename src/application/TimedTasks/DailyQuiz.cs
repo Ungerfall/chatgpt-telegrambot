@@ -1,34 +1,47 @@
-﻿using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Telegram.Bot;
+using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Configuration;
+using Ungerfall.ChatGpt.TelegramBot.Database;
 
 namespace Ungerfall.ChatGpt.TelegramBot.TimedTasks;
-public class DailyQuiz(QuizChats quizChats, ITelegramBotClient botClient)
+public sealed class DailyQuiz : TimedTask
 {
     public const string CRON_EXPRESSION = "0 0 6 * * *";
 
-    public async Task Execute()
+    private readonly QuizChats _quizChats;
+
+    public DailyQuiz(
+        QuizChats quizChats,
+        ITelegramBotClient botClient,
+        ITimedTaskExecutionRepository repo,
+        ILogger<DailyQuiz> logger) : base(repo, botClient, logger)
     {
-        foreach (var chatId in quizChats.Get())
-        {
-            await botClient.SendPollAsync(
-                chatId: chatId,
-                question: "Какая из этих сортировок является примером алгоритма сортировки слиянием?",
-                options:
-                [
-                    "Пирамидальная сортировка",
-                    "Сортировка Шелла",
-                    "Быстрая сортировка",
-                    "Сортировка выбором",
-                    "Сортировка вставками",
-                ],
-                type: Telegram.Bot.Types.Enums.PollType.Quiz,
-                correctOptionId: 4,
-                explanation: @"Сортировка вставками (Insertion Sort) эффективна для небольших данных или когда большая 
-часть элементов списка уже упорядочена. Это связано с тем, что она проходит через список, оставляя упорядоченную 
-последовательность за собой, и эффективно работает с почти упорядоченными данными, 
-минимизируя количество необходимых перемещений.",
-                explanationParseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
-        }
+        _quizChats = quizChats;
+    }
+
+    protected override IEnumerable<long> ChatIds => _quizChats.Get();
+    protected override string Name => "Daily computer science quiz";
+    protected override DateTime Date => DateTime.UtcNow;
+    protected override string Type => "quiz";
+
+    protected override async Task ExecuteQuiz(long chatId)
+    {
+        TimedTaskQuiz quiz = await _repo.GetQuiz(chatId, TimedTaskQuiz.Type_ComputerScience, cancellation: default)
+            ?? throw new ApplicationException("quizzes are not found. Ingest new quizzes.");
+
+        await _botClient.SendPollAsync(
+                    chatId: chatId,
+                    question: quiz.Question,
+                    quiz.Options,
+                    type: Telegram.Bot.Types.Enums.PollType.Quiz,
+                    correctOptionId: quiz.CorrectOptionId,
+                    explanation: quiz.Explanation,
+                    explanationParseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown
+            );
+        await _repo.CompleteQuiz(quiz, cancellation: default);
     }
 }
