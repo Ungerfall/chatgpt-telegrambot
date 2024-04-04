@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ungerfall.ChatGpt.Utils.QuizIngestion", "utils.quiz-ingestion\Ungerfall.ChatGpt.Utils.QuizIngestion.csproj", "{3164419E-B0FC-4A3C-9842-94061DA8DD96}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,10 @@ Global
 		{C72B4EBB-2A2C-4840-91B3-8C4A22E21D38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C72B4EBB-2A2C-4840-91B3-8C4A22E21D38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C72B4EBB-2A2C-4840-91B3-8C4A22E21D38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3164419E-B0FC-4A3C-9842-94061DA8DD96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3164419E-B0FC-4A3C-9842-94061DA8DD96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3164419E-B0FC-4A3C-9842-94061DA8DD96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3164419E-B0FC-4A3C-9842-94061DA8DD96}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
