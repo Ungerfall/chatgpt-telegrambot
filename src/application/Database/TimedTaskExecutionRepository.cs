@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
@@ -23,6 +24,19 @@ public class TimedTaskExecutionRepository(
                 EnableContentResponseOnWrite = false,
             },
             cancellation);
+    }
+
+    public async Task Create<T>(IEnumerable<T> items, Func<T, long> chatIdSelector, CancellationToken cancellation)
+    {
+        var container = cosmos.GetContainer(_cosmosDbOptions.DatabaseId, _cosmosDbOptions.TimedTasksContainerId);
+        foreach (var item in items)
+        {
+            await container.CreateItemAsync(
+                item,
+                new PartitionKey(chatIdSelector(item)),
+                new ItemRequestOptions { EnableContentResponseOnWrite = false },
+                cancellation);
+        }
     }
 
     public async Task<bool> Exists(long chatId, string name, DateTime date, CancellationToken cancellation)
