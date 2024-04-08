@@ -99,7 +99,7 @@ public class CosmosDbTests
         Assert.NotNull(quiz);
         Assert.Equal(ingestedQuiz.ChatId, quiz.ChatId);
         Assert.Equal(ingestedQuiz.CorrectOptionId, quiz.CorrectOptionId);
-        Assert.Equal(string.Join(";", ingestedQuiz.Options), string.Join(";", quiz.Options));
+        Assert.True(ingestedQuiz.Options.SequenceEqual(quiz.Options));
         Assert.Equal(ingestedQuiz.Question, quiz.Question);
         Assert.Equal(ingestedQuiz.Type, quiz.Type);
         Assert.Equal(ingestedQuiz.Id, quiz.Id);
