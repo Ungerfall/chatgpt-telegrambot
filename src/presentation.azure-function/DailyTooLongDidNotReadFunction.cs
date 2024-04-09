@@ -18,7 +18,7 @@ public class DailyTooLongDidNotReadFunction
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    [Function("DailyTooLongDidNotReadToday")]
+    [Function("DailyTooLongDidNotRead")]
     public async Task Run([TimerTrigger(TimedTasks.DailyTooLongDidNotRead.CRON_EXPRESSION)] TimerInfo timer)
     {
         _logger.LogInformation("C# Timer trigger function executed at: {now}", DateTime.Now);
