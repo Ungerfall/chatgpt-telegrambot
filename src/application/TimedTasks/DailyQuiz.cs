@@ -28,7 +28,7 @@ public sealed class DailyQuiz : TimedTask
     protected override DateTime Date => DateTime.UtcNow;
     protected override string Type => "quiz";
 
-    protected override async Task ExecuteQuiz(long chatId)
+    protected override async Task ExecuteForChat(long chatId)
     {
         TimedTaskQuiz quiz = await _repo.GetQuiz(chatId, TimedTaskQuiz.Type_ComputerScience, cancellation: default)
             ?? throw new ApplicationException("quizzes are not found. Ingest new quizzes.");

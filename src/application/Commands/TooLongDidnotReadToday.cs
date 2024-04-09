@@ -40,14 +40,14 @@ public class TooLongDidNotReadToday
         _whitelist = whitelist;
     }
 
-    public async Task<Message> Execute(Message message, CancellationToken cancellation)
+    public async Task<Message> Execute(long chatId, CancellationToken cancellation = default)
     {
         await _botClient.SendChatActionAsync(
-            chatId: message.Chat.Id,
+            chatId: chatId,
             ChatAction.Typing,
             cancellationToken: cancellation);
         var gptTasks = new List<Task<string>>();
-        await foreach (var r in CreateGptRequest(message, cancellation))
+        await foreach (var r in CreateGptRequest(chatId, cancellation))
         {
             gptTasks.Add(SendGptRequest(r, cancellation));
         }
@@ -57,23 +57,21 @@ public class TooLongDidNotReadToday
             ? "Сегодня ничего не произошло"
             : $"{string.Join(NewLine, summaries)}{NewLine}TL;DR не записывается в историю";
         return await _botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
+            chatId: chatId,
             text: telegramMessage,
-            replyToMessageId: message.MessageId,
             cancellationToken: cancellation);
     }
 
     private async IAsyncEnumerable<ChatCompletionCreateRequest> CreateGptRequest(
-        Message message,
-        [EnumeratorCancellation] CancellationToken cancellation)
+        long chatId,
+        [EnumeratorCancellation] CancellationToken cancellation = default)
     {
         const float temperature = .2f;
-        var user = message.From?.Username ?? "unknown";
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var mb = ChatMessageBuilder.Create()
             .WithTokenCounter(_tokenCounter)
-            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(message.Chat.Id));
-        await foreach (var h in _history.Get(message.Chat.Id, today, cancellation))
+            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(chatId));
+        await foreach (var h in _history.Get(chatId, today, cancellation))
         {
             if (!mb.CanAddMessage)
             {
@@ -83,8 +81,7 @@ public class TooLongDidNotReadToday
                 {
                     Messages = mb.Build(),
                     Temperature = temperature,
-                    User = user,
-                    Model = Models.Model.Gpt_4.EnumToString(),
+                    Model = Models.Gpt_3_5_Turbo,
                 };
             }
 
@@ -102,16 +99,15 @@ public class TooLongDidNotReadToday
         {
             Messages = gptMessage,
             Temperature = temperature,
-            User = user,
-            Model = Models.Model.Gpt_4.EnumToString(),
+            Model = Models.Gpt_3_5_Turbo,
         };
     }
 
-    private async Task<string> SendGptRequest(ChatCompletionCreateRequest request, CancellationToken cancellation)
+    private async Task<string> SendGptRequest(ChatCompletionCreateRequest request, CancellationToken cancellation = default)
     {
         var completionResult = await _openAiService.ChatCompletion.Create(
             request,
-            Models.Model.Gpt_4,
+            Models.Model.Gpt_3_5_Turbo,
             cancellationToken: cancellation);
         _logger.LogInformation("Tokens: {@tokens}",
             new

@@ -112,7 +112,7 @@ public class UpdateHandler
         var action = command switch
         {
             "/image" => _imageCommand.Execute(message, msgWithoutCommand, cancellation),
-            "/tldrtoday" => _tooLongDidnotReadCommand.Execute(message, cancellation),
+            "/tldrtoday" => _tooLongDidnotReadCommand.Execute(message.Chat.Id, cancellation),
             _ => OnMessageReceived(message, messageText, cancellation),
         };
         await action;

@@ -34,7 +34,7 @@ public abstract class TimedTask
                     continue;
                 }
 
-                await ExecuteQuiz(chatId);
+                await ExecuteForChat(chatId);
                 await _repo.Create(
                     new Database.TimedTaskExecution
                     {
@@ -61,5 +61,5 @@ public abstract class TimedTask
     protected abstract DateTime Date { get; }
     protected abstract string Type { get; }
 
-    protected abstract Task ExecuteQuiz(long chatId);
+    protected abstract Task ExecuteForChat(long chatId);
 }
