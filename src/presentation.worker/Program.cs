@@ -65,7 +65,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<ITokenCounter, TokenCounter>();
         services.AddScoped<IWhitelist, Whitelist>();
         services.AddScoped<TooLongDidNotReadToday>();
-        services.AddScoped<DailyTooLongDidNotRead>();
+        services.AddScoped<DailySummary>();
         services.AddScoped<DailyQuiz>();
         services.AddScoped<GenerateImage>();
         services.AddScoped<UpdateHandler>();
