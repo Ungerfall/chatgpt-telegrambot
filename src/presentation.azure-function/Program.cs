@@ -82,13 +82,13 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                    s.AddScoped<ITokenCounter, TokenCounter>();
                    s.AddScoped<IWhitelist, Whitelist>();
                    s.AddScoped<TooLongDidNotReadToday>();
-                   s.AddScoped<DailyTooLongDidNotRead>();
+                   s.AddScoped<DailySummary>();
                    s.AddScoped<DailyQuiz>();
                    s.AddScoped<GenerateImage>();
                    s.AddScoped<UpdateHandler>();
                    s.AddSingleton<TestUsers>();
                    s.AddSingleton<QuizChats>();
-                   s.AddSingleton<DailyTooLongDidNotReadChats>();
+                   s.AddSingleton<DailySummaryChats>();
                })
                .Build();
         }
