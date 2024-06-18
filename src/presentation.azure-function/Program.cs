@@ -84,6 +84,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                    s.AddScoped<TooLongDidNotReadToday>();
                    s.AddScoped<DailySummary>();
                    s.AddScoped<DailyQuiz>();
+                   s.AddScoped<DailyFilmsQuiz>();
                    s.AddScoped<GenerateImage>();
                    s.AddScoped<UpdateHandler>();
                    s.AddSingleton<TestUsers>();
