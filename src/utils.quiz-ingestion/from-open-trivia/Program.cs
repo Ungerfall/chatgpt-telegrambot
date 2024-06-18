@@ -1,6 +1,9 @@
-﻿using Microsoft.Azure.Cosmos;
-using OpenAI.Managers;
+﻿using DeepL;
+using DeepL.Model;
+using Microsoft.Azure.Cosmos;
+using ShellProgressBar;
 using System.CommandLine;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Ungerfall.ChatGpt.TelegramBot;
@@ -21,17 +24,12 @@ rootCommand.SetHandler(async (int? amount) =>
     }
 
     // interactive mode
-    var openAiApiKey = MaskInput("Enter your Open AI API key");
     var cosmosDbConn = MaskInput("Enter your cosmos db connection string");
+    var deepLAuth = MaskInput("Enter your DeepL API key");
     Console.WriteLine("Enter comma-separated chat ids:");
     long[] chats = (Console.ReadLine() ?? string.Empty).Split(',').Select(long.Parse).ToArray();
 
     // init services
-    var openAiService = new OpenAIService(new OpenAI.OpenAiOptions
-    {
-        ApiKey = openAiApiKey,
-        DefaultModelId = OpenAI.ObjectModels.Models.Gpt_4,
-    });
     var cosmosClient = new CosmosClient(
         cosmosDbConn,
         clientOptions: new CosmosClientOptions
@@ -39,15 +37,74 @@ rootCommand.SetHandler(async (int? amount) =>
             MaxRetryAttemptsOnRateLimitedRequests = 3,
             Serializer = new CosmosSystemTextJsonSerializer(),
         });
+    var translator = new Translator(deepLAuth);
 
-    // get open trivia quizzes
+    // get open trivia response
     HttpClient httpClient = new();
-    var res = await httpClient.GetAsync($"https://opentdb.com/api.php?amount={amount}&category=11&type=multiple");
-    QuizSource[] quizzes = JsonSerializer.Deserialize(
-        await res.Content.ReadAsStringAsync(),
-        typeof(QuizSource[]),
-        QuizContext.Default) as QuizSource[]
-        ?? throw new ArgumentException("Cannot deserialize amount");
+    Console.WriteLine("Getting {0} quizzes from Open Trivia DB...", amount);
+    var res = await httpClient.GetAsync($"https://opentdb.com/api.php?amount={amount}&category=11&type=multiple&encode=base64");
+    string content = await res.Content.ReadAsStringAsync();
+    OpenTriviaResponse response = JsonSerializer.Deserialize(
+        content,
+        typeof(OpenTriviaResponse),
+        QuizContext.Default) as OpenTriviaResponse
+        ?? throw new ArgumentException($"Cannot deserialize HTTP response {content}");
+    // translate
+    var options = new ProgressBarOptions { ProgressCharacter = '*' };
+    using (var progress = new ProgressBar(response.Quizzes.Length, "Translate to Russian using DeepL", options))
+    {
+        foreach (var quiz in response.Quizzes)
+        {
+            progress.Tick();
+            TextResult translatedQuestion = await translator.TranslateTextAsync(
+                  FromBase64(quiz.Question),
+                  LanguageCode.English,
+                  LanguageCode.Russian,
+                  new TextTranslateOptions { PreserveFormatting = true });
+            quiz.Question = translatedQuestion.Text;
+            for (int i = 0; i < quiz.IncorrectAnswers.Length; i++)
+            {
+                TextResult translatedIncorrectAnswer = await translator.TranslateTextAsync(
+                    FromBase64(quiz.IncorrectAnswers[i]),
+                    LanguageCode.English,
+                    LanguageCode.Russian,
+                    new TextTranslateOptions { PreserveFormatting = true });
+                quiz.IncorrectAnswers[i] = translatedIncorrectAnswer.Text;
+            }
+
+            TextResult translatedCorrectAnswer = await translator.TranslateTextAsync(
+                FromBase64(quiz.CorrectionAnswer),
+                LanguageCode.English,
+                LanguageCode.Russian,
+                new TextTranslateOptions { PreserveFormatting = true });
+            quiz.CorrectionAnswer = translatedCorrectAnswer.Text;
+        }
+    }
+
+    TimedTaskQuiz[] batch = [.. response.Quizzes
+        .SelectMany(q =>
+        {
+            Dictionary<string, int> indexedOptions = q.IncorrectAnswers
+                .Concat([q.CorrectionAnswer])
+                .Distinct()
+                .OrderBy(_ => Random.Shared.Next())
+                .Select((option, i) => (option, i))
+                .ToDictionary();
+            int correctOptionId = indexedOptions[q.CorrectionAnswer];
+
+            return chats
+                .Select(id => new TimedTaskQuiz
+                {
+                    ChatId = id,
+                    CorrectOptionId = correctOptionId,
+                    Options = [.. indexedOptions.Keys],
+                    Question = q.Question,
+                    Type = TimedTaskQuiz.Type_Films,
+                    Id = Guid.NewGuid().ToString(),
+                    DateUtc = DateTime.UtcNow,
+                });
+        })];
+
     var repo = new TimedTaskExecutionRepository(
         cosmosClient,
         Microsoft.Extensions.Options.Options.Create(new CosmosDbOptions
@@ -56,29 +113,7 @@ rootCommand.SetHandler(async (int? amount) =>
             DatabaseId = "telegram-bot",
             TimedTasksContainerId = "timedTaskExecutions"
         }));
-    var batch = quizzes
-     .SelectMany(_ => chats, (r, c) => (r, c))
-     .Select(item =>
-     {
-         (QuizSource quiz, long chatId) = item;
-         Dictionary<string, int> options = quiz.IncorrectAnswers
-            .Concat([quiz.CorrectionAnswer])
-            .Select((option, i) => (option, i)) // index options [0..Length)
-            .ToDictionary(keySelector: x => x.option, elementSelector: x => x.i);
-         int correctOptionId = options[quiz.CorrectionAnswer];
-
-         return new TimedTaskQuiz
-         {
-             ChatId = chatId,
-             CorrectOptionId = correctOptionId,
-             Options = [.. options.Keys],
-             Question = quiz.Question,
-             Type = TimedTaskQuiz.Type_Films,
-             Id = Guid.NewGuid().ToString(),
-             DateUtc = DateTime.UtcNow,
-         };
-     });
-
+    Console.WriteLine("Saving quizzes to Cosmos DB container...");
     await repo.Create(batch, chatIdSelector: item => item.ChatId, default);
 
     static string MaskInput(string intro)
@@ -105,6 +140,12 @@ rootCommand.SetHandler(async (int? amount) =>
 }, numberOfQuestions);
 
 await rootCommand.InvokeAsync(args);
+
+static string FromBase64(string base64)
+{
+    byte[] data = Convert.FromBase64String(base64);
+    return Encoding.UTF8.GetString(data);
+}
 
 internal sealed class OpenTriviaResponse
 {
