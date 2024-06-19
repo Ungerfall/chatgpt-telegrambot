@@ -5,6 +5,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.Database;
 public class TimedTaskQuiz
 {
     public const string Type_ComputerScience = "quiz-type-cs";
+    public const string Type_Films = "quiz-type-films";
 
     [JsonPropertyName("id")]
     public string Id { get; init; } = null!;

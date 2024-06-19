@@ -4,26 +4,24 @@ using System;
 using System.Threading.Tasks;
 
 namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction;
-public class DailyQuizFunction
+public class DailyFilmsQuizFunction
 {
-    private readonly TimedTasks.DailyQuiz _task;
-    private readonly ILogger<DailyQuizFunction> _logger;
+    private readonly TimedTasks.DailyFilmsQuiz _task;
+    private readonly ILogger<DailyFilmsQuizFunction> _logger;
 
-    public DailyQuizFunction(
-        TimedTasks.DailyQuiz task,
-        ILogger<DailyQuizFunction> logger)
+    public DailyFilmsQuizFunction(
+        TimedTasks.DailyFilmsQuiz task,
+        ILogger<DailyFilmsQuizFunction> logger)
     {
         _task = task ?? throw new ArgumentNullException(nameof(task));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    [Function("DailyQuiz")]
-    public async Task Run([TimerTrigger(TimedTasks.DailyQuiz.CRON_EXPRESSION)] TimerInfo timer)
+    [Function("DailyFilmsQuiz")]
+    public async Task Run([TimerTrigger(TimedTasks.DailyFilmsQuiz.CRON_EXPRESSION)] TimerInfo timer)
     {
         _logger.LogInformation("C# Timer trigger function executed at: {now}", DateTime.Now);
 
-        // TODO: ingest computer science quizzes before removing
-        return;
         await _task.Execute();
 
         _logger.LogInformation("Next timer schedule at: {nextSchedule}", timer?.ScheduleStatus?.Next);
