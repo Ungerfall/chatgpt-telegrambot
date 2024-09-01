@@ -6,6 +6,7 @@ public class TimedTaskQuiz
 {
     public const string Type_ComputerScience = "quiz-type-cs";
     public const string Type_Films = "quiz-type-films";
+    public const string Type_VideoGames = " quiz-type-videogames";
 
     [JsonPropertyName("id")]
     public string Id { get; init; } = null!;
@@ -25,4 +26,8 @@ public class TimedTaskQuiz
     public bool Posted { get; set; }
     [JsonPropertyName("date")]
     public DateTime? DateUtc { get; set; }
+    [JsonPropertyName("computedHash")]
+    public string? ComputedHash { get; set; }
+    [JsonPropertyName("hashAlgorithm")]
+    public string? HashAlgorithm { get; set; }
 }
