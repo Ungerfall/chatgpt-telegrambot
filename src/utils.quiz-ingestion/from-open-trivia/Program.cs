@@ -3,6 +3,7 @@ using DeepL.Model;
 using Microsoft.Azure.Cosmos;
 using ShellProgressBar;
 using System.CommandLine;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,13 +13,53 @@ using Ungerfall.ChatGpt.TelegramBot.Database;
 var numberOfQuestions = new Option<int?>(
     aliases: ["--number", "-n"],
     description: """
-        Number of questions to ingest
+        Number of questions
     """);
+var category = new Option<int?>(
+    aliases: ["--category", "-c"],
+    description: """
+    Quizzes category:
+    9: General Knowledge
+    10: Entertainment: Books
+    11: Entertainment: Film
+    12: Entertainment: Music
+    13: Entertainment: Musicals & Theatres
+    14: Entertainment: Television
+    15: Entertainment: Video Games
+    16: Entertainment: Board Games
+    17: Science & Nature
+    18: Science: Computers
+    19: Science: Mathematics
+    20: Mythology
+    21: Sports
+    22: Geography
+    23: History
+    24: Politics
+    25: Art
+    26: Celebrities
+    27: Animals
+    28: Vehicles
+    29: Entertainment: Comics
+    30: Science: Gadgets
+    31: Entertainment: Japanese Anime & Manga
+    32: Entertainment: Cartoon & Animations
+    """);
+var quizTypes = new Dictionary<int, string>
+{
+    [11] = TimedTaskQuiz.Type_Films,
+    [15] = TimedTaskQuiz.Type_VideoGames,
+};
 var rootCommand = new RootCommand("Quiz ingestion from Open Trivia DB");
 rootCommand.AddOption(numberOfQuestions);
-rootCommand.SetHandler(async (int? amount) =>
+rootCommand.AddOption(category);
+rootCommand.SetHandler(async (int? amount, int? category) =>
 {
     if (amount is null)
+    {
+        return;
+    }
+
+    if (category is null)
     {
         return;
     }
@@ -42,7 +83,7 @@ rootCommand.SetHandler(async (int? amount) =>
     // get open trivia response
     HttpClient httpClient = new();
     Console.WriteLine("Getting {0} quizzes from Open Trivia DB...", amount);
-    var res = await httpClient.GetAsync($"https://opentdb.com/api.php?amount={amount}&category=11&type=multiple&encode=base64");
+    var res = await httpClient.GetAsync($"https://opentdb.com/api.php?amount={amount}&category={category}&type=multiple&encode=base64");
     string content = await res.Content.ReadAsStringAsync();
     OpenTriviaResponse response = JsonSerializer.Deserialize(
         content,
@@ -81,6 +122,7 @@ rootCommand.SetHandler(async (int? amount) =>
         }
     }
 
+    string quizType = quizTypes[category.Value];
     TimedTaskQuiz[] batch = [.. response.Quizzes
         .SelectMany(q =>
         {
@@ -92,6 +134,7 @@ rootCommand.SetHandler(async (int? amount) =>
                 .ToDictionary();
             int correctOptionId = indexedOptions[q.CorrectionAnswer];
 
+            var (hash, algo) = ComputeHash(q);
             return chats
                 .Select(id => new TimedTaskQuiz
                 {
@@ -99,9 +142,11 @@ rootCommand.SetHandler(async (int? amount) =>
                     CorrectOptionId = correctOptionId,
                     Options = [.. indexedOptions.Keys],
                     Question = q.Question,
-                    Type = TimedTaskQuiz.Type_Films,
+                    Type = quizType,
                     Id = Guid.NewGuid().ToString(),
                     DateUtc = DateTime.UtcNow,
+                    ComputedHash = hash,
+                    HashAlgorithm = algo,
                 });
         })];
 
@@ -137,7 +182,8 @@ rootCommand.SetHandler(async (int? amount) =>
         Console.WriteLine();
         return password;
     }
-}, numberOfQuestions);
+}, numberOfQuestions
+, category);
 
 await rootCommand.InvokeAsync(args);
 
@@ -145,6 +191,22 @@ static string FromBase64(string base64)
 {
     byte[] data = Convert.FromBase64String(base64);
     return Encoding.UTF8.GetString(data);
+}
+
+static (string Hash, string Algo) ComputeHash(QuizSource s)
+{
+    byte[] data = Encoding.UTF8.GetBytes(string.Concat(s.Question, s.Type));
+    data = SHA256.HashData(data);
+    StringBuilder sBuilder = new();
+    for (int i = 0; i < data.Length; i++)
+    {
+        sBuilder.Append(data[i].ToString("x2"));
+    }
+
+    return (
+        sBuilder.ToString(),
+        HashAlgorithmName.SHA256.Name
+            ?? throw new InvalidOperationException("HashAlgorithm does not have name"));
 }
 
 internal sealed class OpenTriviaResponse

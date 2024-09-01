@@ -22,9 +22,11 @@ public class DailyQuizFunction
     {
         _logger.LogInformation("C# Timer trigger function executed at: {now}", DateTime.Now);
 
+        await Task.CompletedTask;
         // TODO: ingest computer science quizzes before removing
-        return;
+        /*
         await _task.Execute();
+        */
 
         _logger.LogInformation("Next timer schedule at: {nextSchedule}", timer?.ScheduleStatus?.Next);
     }
