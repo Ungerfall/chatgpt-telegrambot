@@ -44,6 +44,11 @@ var category = new Option<int?>(
     31: Entertainment: Japanese Anime & Manga
     32: Entertainment: Cartoon & Animations
     """);
+var quizTypes = new Dictionary<int, string>
+{
+    [11] = TimedTaskQuiz.Type_Films,
+    [15] = TimedTaskQuiz.Type_VideoGames,
+};
 var rootCommand = new RootCommand("Quiz ingestion from Open Trivia DB");
 rootCommand.AddOption(numberOfQuestions);
 rootCommand.AddOption(category);
@@ -117,6 +122,7 @@ rootCommand.SetHandler(async (int? amount, int? category) =>
         }
     }
 
+    string quizType = quizTypes[category.Value];
     TimedTaskQuiz[] batch = [.. response.Quizzes
         .SelectMany(q =>
         {
@@ -136,7 +142,7 @@ rootCommand.SetHandler(async (int? amount, int? category) =>
                     CorrectOptionId = correctOptionId,
                     Options = [.. indexedOptions.Keys],
                     Question = q.Question,
-                    Type = TimedTaskQuiz.Type_Films,
+                    Type = quizType,
                     Id = Guid.NewGuid().ToString(),
                     DateUtc = DateTime.UtcNow,
                     ComputedHash = hash,
