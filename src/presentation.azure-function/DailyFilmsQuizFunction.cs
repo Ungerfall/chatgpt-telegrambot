@@ -22,7 +22,11 @@ public class DailyFilmsQuizFunction
     {
         _logger.LogInformation("C# Timer trigger function executed at: {now}", DateTime.Now);
 
+        await Task.CompletedTask;
+        // TODO: disabled until new questions ingested
+        /*
         await _task.Execute();
+        */
 
         _logger.LogInformation("Next timer schedule at: {nextSchedule}", timer?.ScheduleStatus?.Next);
     }
