@@ -72,8 +72,8 @@ public class ShrinkMessage
         var completionResult = await _openAiService.ChatCompletion.Create(
             new ChatCompletionCreateRequest
             {
-                Messages = new[]
-                {
+                Messages =
+                [
                     ChatMessage.FromSystem("Assistant is an intelligent chatbot designed to shrink chat messages, so that the messages will be used later to feed chat GPT api."
                             + "Instructions:"
                             + "- Chat language is Russian."
@@ -81,12 +81,12 @@ public class ShrinkMessage
                             + "- Do not remove mentions starting with @."
                             + "- Do not remove links."),
                     ChatMessage.FromUser("Shrink the message: " + msg.Message),
-                },
+                ],
                 Temperature = 0f,
                 User = msg.User,
-                Model = Models.Model.Gpt_3_5_Turbo.EnumToString(),
+                Model = Models.Gpt_4o_mini,
             },
-            Models.Model.Gpt_3_5_Turbo);
+            Models.Model.Gpt_4o_mini);
         return completionResult.Successful
             ? completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content."
             : throw new InvalidOperationException("ChatGPT request wasn't successful");

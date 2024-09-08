@@ -42,7 +42,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                    {
                        setup.ApiKey = openAiApiKey;
                        setup.Organization = openAiOrg;
-                       setup.DefaultModelId = Models.Gpt_3_5_Turbo;
+                       setup.DefaultModelId = Models.Gpt_4o_mini;
                    });
                    s.Configure<CosmosDbOptions>(opt =>
                    {

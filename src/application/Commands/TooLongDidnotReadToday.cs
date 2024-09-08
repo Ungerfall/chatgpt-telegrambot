@@ -81,7 +81,7 @@ public class TooLongDidNotReadToday
                 {
                     Messages = mb.Build(),
                     Temperature = temperature,
-                    Model = Models.Gpt_3_5_Turbo,
+                    Model = Models.Gpt_4o_mini,
                 };
             }
 
@@ -99,7 +99,7 @@ public class TooLongDidNotReadToday
         {
             Messages = gptMessage,
             Temperature = temperature,
-            Model = Models.Gpt_3_5_Turbo,
+            Model = Models.Gpt_4o_mini,
         };
     }
 
@@ -107,7 +107,7 @@ public class TooLongDidNotReadToday
     {
         var completionResult = await _openAiService.ChatCompletion.Create(
             request,
-            Models.Model.Gpt_3_5_Turbo,
+            Models.Model.Gpt_4o_mini,
             cancellationToken: cancellation);
         _logger.LogInformation("Tokens: {@tokens}",
             new
