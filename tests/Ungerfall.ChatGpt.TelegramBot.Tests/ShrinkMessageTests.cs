@@ -1,6 +1,5 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using Moq;
 using OpenAI.Interfaces;
 using OpenAI.ObjectModels.RequestModels;
 using OpenAI.ObjectModels.ResponseModels;
@@ -16,10 +15,10 @@ public class ShrinkMessageTest
     public async Task Run_ShouldShrinkMessage_WhenMessageIsOldAndLengthy()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<ShrinkMessage>>();
-        var openAiServiceMock = new Mock<IOpenAIService>();
-        var tokenCounterMock = new Mock<ITokenCounter>();
-        var messageRepoMock = new Mock<ITelegramMessageRepository>();
+        var loggerMock = Substitute.For<ILogger<ShrinkMessage>>();
+        var openAiServiceMock = Substitute.For<IOpenAIService>();
+        var tokenCounterMock = Substitute.For<ITokenCounter>();
+        var messageRepoMock = Substitute.For<ITelegramMessageRepository>();
 
         var oldMessage = new TelegramMessage
         {
@@ -30,52 +29,50 @@ public class ShrinkMessageTest
             DateUtc = DateTime.UtcNow.AddDays(-10).ToString(TelegramMessage.DATE_UTC_FORMAT),
         };
 
-        messageRepoMock.Setup(repo => repo.GetOldMessages(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        messageRepoMock.GetOldMessages(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<TelegramMessage> { oldMessage }.ToAsyncEnumerable());
 
-        tokenCounterMock.Setup(tc => tc.Count(oldMessage.Message)).Returns(25);
-        tokenCounterMock.Setup(tc => tc.Count(It.IsNotIn(oldMessage.Message))).Returns(10);
+        tokenCounterMock.Count(oldMessage.Message).Returns(25);
+        tokenCounterMock.Count(Arg.Is<string>(p => !p.Equals(oldMessage.Message))).Returns(10);
 
-        openAiServiceMock.Setup(service => service.ChatCompletion.CreateCompletion(
-                It.IsAny<ChatCompletionCreateRequest>(),
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ChatCompletionCreateResponse
+        openAiServiceMock.ChatCompletion.CreateCompletion(
+                Arg.Any<ChatCompletionCreateRequest>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new ChatCompletionCreateResponse
             {
-                Choices = new List<ChatChoiceResponse>
-                {
+                Choices =
+                [
                     new ChatChoiceResponse
                     {
                         Message = ChatMessage.FromAssistant("Shrunk message")
                     }
-                }
+                ]
             });
 
         var function = new ShrinkMessage(
-            openAiServiceMock.Object,
-            tokenCounterMock.Object,
-            loggerMock.Object,
-            messageRepoMock.Object);
+            openAiServiceMock,
+            tokenCounterMock,
+            loggerMock,
+            messageRepoMock);
 
         // Act
         await function.Run(new TimerInfo { ScheduleStatus = default, IsPastDue = default });
 
         // Assert
-        messageRepoMock.Verify(
-            repo => repo.Update(
-                It.Is<TelegramMessage>(m => m.IsShrunk && m.Message == "Shrunk message"),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        await messageRepoMock.Received().Update(
+                Arg.Is<TelegramMessage>(m => m.IsShrunk && m.Message == "Shrunk message"),
+                Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Run_ShouldNotShrinkMessage_WhenChatGPTRequestIsUnsuccessful()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<ShrinkMessage>>();
-        var openAiServiceMock = new Mock<IOpenAIService>();
-        var tokenCounterMock = new Mock<ITokenCounter>();
-        var messageRepoMock = new Mock<ITelegramMessageRepository>();
+        var loggerMock = Substitute.For<ILogger<ShrinkMessage>>();
+        var openAiServiceMock = Substitute.For<IOpenAIService>();
+        var tokenCounterMock = Substitute.For<ITokenCounter>();
+        var messageRepoMock = Substitute.For<ITelegramMessageRepository>();
 
         var oldMessage = new TelegramMessage
         {
@@ -86,25 +83,25 @@ public class ShrinkMessageTest
             DateUtc = DateTime.UtcNow.AddDays(-10).ToString(TelegramMessage.DATE_UTC_FORMAT),
         };
 
-        messageRepoMock.Setup(repo => repo.GetOldMessages(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        messageRepoMock.GetOldMessages(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<TelegramMessage> { oldMessage }.ToAsyncEnumerable());
 
-        tokenCounterMock.Setup(tc => tc.Count(oldMessage.Message)).Returns(25);
+        tokenCounterMock.Count(oldMessage.Message).Returns(25);
 
-        openAiServiceMock.Setup(service => service.ChatCompletion.CreateCompletion(
-                It.IsAny<ChatCompletionCreateRequest>(),
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ChatCompletionCreateResponse
+        openAiServiceMock.ChatCompletion.CreateCompletion(
+                Arg.Any<ChatCompletionCreateRequest>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new ChatCompletionCreateResponse
             {
                 Error = new Error(),
             });
 
         var function = new ShrinkMessage(
-            openAiServiceMock.Object,
-            tokenCounterMock.Object,
-            loggerMock.Object,
-            messageRepoMock.Object);
+            openAiServiceMock,
+            tokenCounterMock,
+            loggerMock,
+            messageRepoMock);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -115,10 +112,10 @@ public class ShrinkMessageTest
     public async Task Run_ShouldNotUpdate_WhenShrunkMessageIsLong()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<ShrinkMessage>>();
-        var openAiServiceMock = new Mock<IOpenAIService>();
-        var tokenCounterMock = new Mock<ITokenCounter>();
-        var messageRepoMock = new Mock<ITelegramMessageRepository>();
+        var loggerMock = Substitute.For<ILogger<ShrinkMessage>>();
+        var openAiServiceMock = Substitute.For<IOpenAIService>();
+        var tokenCounterMock = Substitute.For<ITokenCounter>();
+        var messageRepoMock = Substitute.For<ITelegramMessageRepository>();
 
         var oldMessage = new TelegramMessage
         {
@@ -128,39 +125,38 @@ public class ShrinkMessageTest
             DateUtc = DateTime.UtcNow.AddDays(-10).ToString(TelegramMessage.DATE_UTC_FORMAT),
         };
 
-        messageRepoMock.Setup(repo => repo.GetOldMessages(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        messageRepoMock.GetOldMessages(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<TelegramMessage> { oldMessage }.ToAsyncEnumerable());
 
-        tokenCounterMock.Setup(tc => tc.Count(oldMessage.Message)).Returns(6);
-        tokenCounterMock.Setup(tc => tc.Count(It.IsNotIn(oldMessage.Message))).Returns(10);
+        tokenCounterMock.Count(oldMessage.Message).Returns(6);
+        tokenCounterMock.Count(Arg.Is<string>(p => !p.Equals(oldMessage.Message))).Returns(10);
 
-        openAiServiceMock.Setup(service => service.ChatCompletion.CreateCompletion(
-                It.IsAny<ChatCompletionCreateRequest>(),
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ChatCompletionCreateResponse
+        openAiServiceMock.ChatCompletion.CreateCompletion(
+                Arg.Any<ChatCompletionCreateRequest>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new ChatCompletionCreateResponse
             {
-                Choices = new List<ChatChoiceResponse>
-                {
+                Choices =
+                [
                     new ChatChoiceResponse
                     {
                         Message = ChatMessage.FromAssistant("This is an even longer message than before!")
                     }
-                }
+                ]
             });
 
         var function = new ShrinkMessage(
-            openAiServiceMock.Object,
-            tokenCounterMock.Object,
-            loggerMock.Object,
-            messageRepoMock.Object);
+            openAiServiceMock,
+            tokenCounterMock,
+            loggerMock,
+            messageRepoMock);
 
         // Act
         await function.Run(new TimerInfo { ScheduleStatus = default, IsPastDue = default });
 
         // Assert
-        messageRepoMock.Verify(
-            repo => repo.Update(It.IsAny<TelegramMessage>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        await messageRepoMock.Received(requiredNumberOfCalls: 0)
+            .Update(Arg.Any<TelegramMessage>(), Arg.Any<CancellationToken>());
     }
 }
