@@ -62,7 +62,7 @@ rootCommand.SetHandler(async file =>
     var openAiService = new OpenAIService(new OpenAI.OpenAiOptions
     {
         ApiKey = openAiApiKey,
-        DefaultModelId = OpenAI.ObjectModels.Models.Gpt_3_5_Turbo,
+        DefaultModelId = OpenAI.ObjectModels.Models.Gpt_4o_mini,
     });
     var cosmosClient = new CosmosClient(
         cosmosDbConn,

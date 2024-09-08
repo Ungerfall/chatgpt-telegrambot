@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using NSubstitute;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Configuration;

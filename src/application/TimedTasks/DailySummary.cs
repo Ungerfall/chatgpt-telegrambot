@@ -27,7 +27,7 @@ public class DailySummary : TimedTask
     private readonly IWhitelist _whitelist;
     private readonly ITelegramMessageRepository _messages;
     private readonly IOpenAIService _openAiService;
-    private readonly string _model = Models.Gpt_4;
+    private readonly string _model = Models.Gpt_4o;
 
     public DailySummary(
         DailySummaryChats chats,
@@ -109,7 +109,7 @@ public class DailySummary : TimedTask
     private async Task<string> SendGptRequest(ChatCompletionCreateRequest request, CancellationToken cancellation = default)
     {
         var completionResult = await _openAiService.ChatCompletion
-            .Create(request, Models.Model.Gpt_4, cancellationToken: cancellation);
+            .Create(request, Models.Model.Gpt_4o, cancellationToken: cancellation);
         return completionResult.Successful
             ? completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content."
             : throw new ApplicationException(completionResult?.Error?.Message ?? "Error sending open ai api request");
