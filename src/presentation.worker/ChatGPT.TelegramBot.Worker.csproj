@@ -5,17 +5,21 @@
     <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-ChatGPT.TelegramBot.Worker-02d9c93d-3749-44aa-b1da-d83b5eba8196</UserSecretsId>
     <RootNamespace>Ungerfall.ChatGpt.TelegramBot.Worker</RootNamespace>
+    <AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.1" />
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.3" />
     <PackageReference Include="Betalgo.OpenAI" Version="8.7.1" />
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.43.1" />
-    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.5" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.46.1">
+        <AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.9.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
     <PackageReference Include="SharpToken" Version="2.0.3" />
-    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+    <PackageReference Include="Telegram.Bot" Version="22.3.0" />
   </ItemGroup>
 
   <ItemGroup>

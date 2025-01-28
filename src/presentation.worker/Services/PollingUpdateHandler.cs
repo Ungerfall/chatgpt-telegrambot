@@ -16,6 +16,11 @@ public class PollingUpdateHandler : IUpdateHandler
         _updateHandler = updateHandler;
     }
 
+    public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();

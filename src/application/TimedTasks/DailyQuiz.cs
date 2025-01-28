@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Configuration;
 using Ungerfall.ChatGpt.TelegramBot.Database;
@@ -33,10 +35,10 @@ public sealed class DailyQuiz : TimedTask
         TimedTaskQuiz quiz = await _repo.GetQuiz(chatId, TimedTaskQuiz.Type_ComputerScience, cancellation: default)
             ?? throw new ApplicationException("quizzes are not found. Ingest new quizzes.");
 
-        await _botClient.SendPollAsync(
+        await _botClient.SendPoll(
                     chatId: chatId,
                     question: quiz.Question,
-                    quiz.Options,
+                    options: quiz.Options.Select(x => new InputPollOption { Text = x }),
                     type: Telegram.Bot.Types.Enums.PollType.Quiz,
                     correctOptionId: quiz.CorrectOptionId,
                     explanation: quiz.Explanation,

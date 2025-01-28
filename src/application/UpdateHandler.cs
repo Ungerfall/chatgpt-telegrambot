@@ -91,7 +91,7 @@ public class UpdateHandler
             || _testUsers.Get().Contains(message.Chat.Id);
         if (!allowed)
         {
-            await _botClient.SendTextMessageAsync(
+            await _botClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: $"""
                 Only for my chat.
@@ -99,7 +99,7 @@ public class UpdateHandler
                 ```{JsonSerializer.Serialize(message.Chat, typeof(Chat), SourceGenerators.TelegramChatContext.Default)}```
                 """,
                 parseMode: ParseMode.Markdown,
-                replyToMessageId: message.MessageId,
+                replyParameters: message.MessageId,
                 cancellationToken: cancellation);
             return;
         }
@@ -140,15 +140,15 @@ public class UpdateHandler
             return msg;
         }
 
-        await _botClient.SendChatActionAsync(
+        await _botClient.SendChatAction(
             chatId: chatId,
             ChatAction.Typing,
             cancellationToken: cancellation);
         var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, chatId, cancellation);
-        var sent = await _botClient.SendTextMessageAsync(
+        var sent = await _botClient.SendMessage(
             chatId: chatId,
             text: $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}",
-            replyToMessageId: msg.MessageId,
+            replyParameters: msg.MessageId,
             cancellationToken: cancellation);
         await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
         await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.MessageId, sent.Date, user, cancellation);

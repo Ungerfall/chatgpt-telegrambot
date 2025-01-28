@@ -28,14 +28,14 @@ public class GenerateImage
     {
         if (string.IsNullOrWhiteSpace(msgWithoutCommand))
         {
-            return await _botClient.SendTextMessageAsync(
+            return await _botClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: "Write an image description after the command.",
-                replyToMessageId: message.MessageId,
+                replyParameters: message.MessageId,
                 cancellationToken: cancellation);
         }
 
-        await _botClient.SendChatActionAsync(
+        await _botClient.SendChatAction(
             chatId: message.Chat.Id,
             ChatAction.UploadPhoto,
             cancellationToken: cancellation);
@@ -50,20 +50,20 @@ public class GenerateImage
             cancellation);
         if (image.Successful)
         {
-            return await _botClient.SendPhotoAsync(
+            return await _botClient.SendPhoto(
                 chatId: message.Chat.Id,
                 photo: InputFile.FromUri(image.Results[0].Url),
+                replyParameters: message.MessageId,
                 hasSpoiler: true,
-                replyToMessageId: message.MessageId,
                 cancellationToken: cancellation);
         }
         else
         {
             _logger.LogError("ChatGPT error: {@error}", new { image.Error?.Type, image.Error?.Message });
-            return await _botClient.SendTextMessageAsync(
+            return await _botClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: "ChatGPT request wasn't successful." + (image.Error?.Message ?? string.Empty),
-                replyToMessageId: message.MessageId,
+                replyParameters: message.MessageId,
                 cancellationToken: cancellation);
         }
     }

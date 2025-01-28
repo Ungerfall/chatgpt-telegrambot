@@ -62,7 +62,7 @@ public class DailySummary : TimedTask
         var telegramMessage = summaries.Length == 0
             ? "Сегодня ничего не произошло"
             : string.Join(Environment.NewLine, summaries);
-        await _botClient.SendTextMessageAsync(
+        await _botClient.SendMessage(
             chatId: chatId,
             text: telegramMessage,
             parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,

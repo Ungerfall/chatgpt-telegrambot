@@ -1,10 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
-using Telegram.Bot.Types.Enums;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Worker.Abstract;
 
@@ -40,10 +38,10 @@ public abstract class ReceiverServiceBase<TUpdateHandler> : IReceiverService
         var receiverOptions = new ReceiverOptions()
         {
             AllowedUpdates = [],
-            ThrowPendingUpdates = true,
+            DropPendingUpdates = true,
         };
 
-        var me = await _botClient.GetMeAsync(stoppingToken);
+        var me = await _botClient.GetMe(stoppingToken);
         _logger.LogInformation("Start receiving updates for {BotName}", me.Username ?? "My Awesome Bot");
 
         // Start receiving updates
