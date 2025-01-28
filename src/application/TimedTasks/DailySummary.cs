@@ -20,6 +20,7 @@ public class DailySummary : TimedTask
     private const string Prompt = """
             Напиши краткое содержание переписки.
             Если есть неотвеченные вопросы, перечисли их и ответь.
+            В конце с новой строки добавь самые релевантные #теги переписки до 5 штук.
             """;
     private const float Temperature = .2f;
 
@@ -64,6 +65,7 @@ public class DailySummary : TimedTask
         await _botClient.SendTextMessageAsync(
             chatId: chatId,
             text: telegramMessage,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
             cancellationToken: default);
     }
 
