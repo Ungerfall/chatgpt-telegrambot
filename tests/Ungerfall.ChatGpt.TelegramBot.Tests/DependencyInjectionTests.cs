@@ -7,7 +7,7 @@ public class DependencyInjectionTest
 {
     public DependencyInjectionTest()
     {
-        Environment.SetEnvironmentVariable("TELEGRAM_BOT_TOKEN", Guid.NewGuid().ToString(), EnvironmentVariableTarget.Process);
+        Environment.SetEnvironmentVariable("TELEGRAM_BOT_TOKEN", GetTgBotId(), EnvironmentVariableTarget.Process);
         Environment.SetEnvironmentVariable("OPENAI_API_KEY", Guid.NewGuid().ToString(), EnvironmentVariableTarget.Process);
         Environment.SetEnvironmentVariable("OPENAI_ORG", Guid.NewGuid().ToString(), EnvironmentVariableTarget.Process);
         Environment.SetEnvironmentVariable("CosmosDatabase", Guid.NewGuid().ToString(), EnvironmentVariableTarget.Process);
@@ -22,6 +22,8 @@ public class DependencyInjectionTest
             "Endpoint=sb://not-real.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=somekey",
             EnvironmentVariableTarget.Process);
     }
+
+    private static string GetTgBotId() => $"{Random.Shared.Next()}:{Guid.NewGuid()}";
 
     [Fact]
     public void AllDependenciesAreRegistered()
