@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Ungerfall.ChatGpt.TelegramBot.Database;
+﻿using Ungerfall.ChatGpt.TelegramBot.Database;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Abstractions;
 public interface ITimedTaskExecutionRepository

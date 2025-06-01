@@ -1,7 +1,4 @@
-﻿using OpenAI.ObjectModels;
-using OpenAI.ObjectModels.RequestModels;
-using System.Collections.Generic;
-using Ungerfall.ChatGpt.TelegramBot.Abstractions;
+﻿using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 
 namespace Ungerfall.ChatGpt.TelegramBot;

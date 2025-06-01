@@ -1,8 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
@@ -33,7 +29,7 @@ public sealed class DailyQuiz : TimedTask
     protected override async Task ExecuteForChat(long chatId)
     {
         TimedTaskQuiz quiz = await _repo.GetQuiz(chatId, TimedTaskQuiz.Type_ComputerScience, cancellation: default)
-            ?? throw new ApplicationException("quizzes are not found. Ingest new quizzes.");
+            ?? throw new InvalidOperationException("quizzes are not found. Ingest new quizzes.");
 
         await _botClient.SendPoll(
                     chatId: chatId,

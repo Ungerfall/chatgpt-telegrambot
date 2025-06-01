@@ -1,10 +1,10 @@
+using Betalgo.Ranul.OpenAI.Extensions;
+using Betalgo.Ranul.OpenAI.ObjectModels;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using OpenAI.Extensions;
-using OpenAI.ObjectModels;
 using System;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
@@ -15,7 +15,7 @@ using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.TimedTasks;
 
 var host = AzureFunctionHost.HostBuilder.Value;
-host.Run();
+await host.RunAsync();
 
 namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
 {

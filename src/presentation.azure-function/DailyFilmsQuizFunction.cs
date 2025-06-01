@@ -20,14 +20,11 @@ public class DailyFilmsQuizFunction
     [Function("DailyFilmsQuiz")]
     public async Task Run([TimerTrigger(TimedTasks.DailyFilmsQuiz.CRON_EXPRESSION)] TimerInfo timer)
     {
-        _logger.LogInformation("C# Timer trigger function executed at: {now}", DateTime.Now);
+        _logger.LogInformation("C# Timer trigger for {Task} function executed at: {Now}", _task.GetType(), DateTime.Now);
 
         await Task.CompletedTask;
         // TODO: disabled until new questions ingested
-        /*
-        await _task.Execute();
-        */
 
-        _logger.LogInformation("Next timer schedule at: {nextSchedule}", timer?.ScheduleStatus?.Next);
+        _logger.LogInformation("Next timer schedule at: {NextSchedule}", timer?.ScheduleStatus?.Next);
     }
 }

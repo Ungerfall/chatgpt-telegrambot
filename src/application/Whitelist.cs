@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Ungerfall.ChatGpt.TelegramBot.Abstractions;
+﻿using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 
 namespace Ungerfall.ChatGpt.TelegramBot;
 public class Whitelist : IWhitelist

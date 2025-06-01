@@ -1,8 +1,8 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using Betalgo.Ranul.OpenAI.Interfaces;
+using Betalgo.Ranul.OpenAI.ObjectModels;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using OpenAI.Interfaces;
-using OpenAI.ObjectModels;
-using OpenAI.ObjectModels.RequestModels;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,7 +38,7 @@ public class ShrinkMessage
     [Function("ShrinkMessage")]
     public async Task Run([TimerTrigger("0 */30 * * * *")] TimerInfo timer)
     {
-        _logger.LogInformation("C# Timer trigger function executed at: {now}", DateTime.Now);
+        _logger.LogInformation("C# Timer trigger function executed at: {Now}", DateTime.Now);
         await foreach (var msg in _messagesRepository.GetOldMessages(MIN_MESSAGE_LENGTH, CancellationToken.None))
         {
             var tokensBefore = _tokenCounter.Count(msg.Message);
@@ -64,7 +64,7 @@ public class ShrinkMessage
             }
         }
 
-        _logger.LogInformation("Next timer schedule at: {nextSchedule}", timer?.ScheduleStatus?.Next);
+        _logger.LogInformation("Next timer schedule at: {NextSchedule}", timer?.ScheduleStatus?.Next);
     }
 
     private async Task<string> AskChatGptToShrink(TelegramMessage msg)

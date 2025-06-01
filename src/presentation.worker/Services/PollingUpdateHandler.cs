@@ -26,7 +26,7 @@ public class PollingUpdateHandler : IUpdateHandler
         throw new NotImplementedException();
     }
 
-    public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
+    public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         await _updateHandler.Handle(update, cancellationToken);
     }

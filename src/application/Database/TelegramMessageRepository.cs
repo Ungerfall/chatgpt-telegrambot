@@ -1,11 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Database;

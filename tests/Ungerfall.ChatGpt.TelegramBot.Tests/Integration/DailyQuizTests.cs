@@ -47,6 +47,9 @@ public class DailyQuizTests
 
         var dailyQuiz = new DailyQuiz(quizChats, botClient, repo, logger);
 
-        await dailyQuiz.Execute();
+        Task task = dailyQuiz.Execute();
+        await task;
+
+        Assert.True(task.IsCompletedSuccessfully);
     }
 }

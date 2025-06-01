@@ -20,14 +20,11 @@ public class DailyQuizFunction
     [Function("DailyQuiz")]
     public async Task Run([TimerTrigger(TimedTasks.DailyQuiz.CRON_EXPRESSION)] TimerInfo timer)
     {
-        _logger.LogInformation("C# Timer trigger function executed at: {now}", DateTime.Now);
+        _logger.LogInformation("C# Timer trigger for {Task} function executed at: {Now}", _task.GetType(), DateTime.Now);
 
         await Task.CompletedTask;
         // TODO: ingest computer science quizzes before removing
-        /*
-        await _task.Execute();
-        */
 
-        _logger.LogInformation("Next timer schedule at: {nextSchedule}", timer?.ScheduleStatus?.Next);
+        _logger.LogInformation("Next timer schedule at: {NextSchedule}", timer?.ScheduleStatus?.Next);
     }
 }

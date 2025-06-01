@@ -1,10 +1,5 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Database;

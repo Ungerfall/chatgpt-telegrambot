@@ -1,12 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using OpenAI.Interfaces;
-using OpenAI.ObjectModels;
-using OpenAI.ObjectModels.RequestModels;
-using System;
-using System.Linq;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -83,7 +76,7 @@ public class UpdateHandler
 
     private async Task BotOnMessageReceived(Message message, CancellationToken cancellation)
     {
-        _logger.LogInformation("Receive message {@message}", new { message.Text, message.Type, message.Chat.Id });
+        _logger.LogInformation("Receive message {@Message}", new { message.Text, message.Type, message.Chat.Id });
         if (message.Text is not { } messageText)
             return;
 
@@ -196,7 +189,7 @@ public class UpdateHandler
             },
             Models.Model.Gpt_4o_mini,
             cancellationToken: cancellation);
-        _logger.LogInformation("Tokens: {@tokens}",
+        _logger.LogInformation("Tokens: {@Tokens}",
             new
             {
                 MyTokensCounter = tokensCount,
@@ -210,7 +203,7 @@ public class UpdateHandler
         }
         else
         {
-            _logger.LogError("ChatGPT error: {@error}", new { completionResult.Error?.Type, completionResult.Error?.Message });
+            _logger.LogError("ChatGPT error: {@Error}", new { completionResult.Error?.Type, completionResult.Error?.Message });
             return ("ChatGPT request wasn't successful", completionResult.Usage?.TotalTokens);
         }
     }

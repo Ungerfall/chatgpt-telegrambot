@@ -17,7 +17,7 @@ public abstract class ReceiverServiceBase<TUpdateHandler> : IReceiverService
     private readonly IUpdateHandler _updateHandler;
     private readonly ILogger<ReceiverServiceBase<TUpdateHandler>> _logger;
 
-    internal ReceiverServiceBase(
+    private protected ReceiverServiceBase(
         ITelegramBotClient botClient,
         TUpdateHandler updateHandler,
         ILogger<ReceiverServiceBase<TUpdateHandler>> logger)

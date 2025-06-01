@@ -1,6 +1,5 @@
 ﻿#nullable disable
 using Microsoft.Azure.Cosmos;
-using System.IO;
 using System.Text.Json;
 using Ungerfall.ChatGpt.TelegramBot.SourceGenerators;
 

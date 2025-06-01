@@ -1,12 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using OpenAI.Interfaces;
-using OpenAI.ObjectModels;
-using OpenAI.ObjectModels.RequestModels;
-using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -76,7 +69,7 @@ public class TooLongDidNotReadToday
             if (!mb.CanAddMessage)
             {
                 mb.AddUserMessage(AskForTLDR);
-                _logger.LogInformation("My tokens counter: {tokens}", mb.TokensCount);
+                _logger.LogInformation("My tokens counter: {Tokens}", mb.TokensCount);
                 yield return new ChatCompletionCreateRequest
                 {
                     Messages = mb.Build(),
@@ -109,7 +102,7 @@ public class TooLongDidNotReadToday
             request,
             Models.Model.Gpt_4o_mini,
             cancellationToken: cancellation);
-        _logger.LogInformation("Tokens: {@tokens}",
+        _logger.LogInformation("Tokens: {@Tokens}",
             new
             {
                 completionResult.Usage?.CompletionTokens,
@@ -122,7 +115,7 @@ public class TooLongDidNotReadToday
         }
         else
         {
-            _logger.LogError("ChatGPT error: {@error}", new { completionResult.Error?.Type, completionResult.Error?.Message });
+            _logger.LogError("ChatGPT error: {@Error}", new { completionResult.Error?.Type, completionResult.Error?.Message });
             return "ChatGPT request wasn't successful";
         }
     }

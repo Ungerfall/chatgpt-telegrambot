@@ -1,8 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using OpenAI.Interfaces;
-using OpenAI.ObjectModels;
-using System.Threading;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -40,7 +36,7 @@ public class GenerateImage
             ChatAction.UploadPhoto,
             cancellationToken: cancellation);
         var image = await _openAiService.Image.CreateImage(
-            new OpenAI.ObjectModels.RequestModels.ImageCreateRequest
+            new ImageCreateRequest
             {
                 Prompt = msgWithoutCommand,
                 Size = StaticValues.ImageStatics.Size.Size256,
@@ -59,7 +55,7 @@ public class GenerateImage
         }
         else
         {
-            _logger.LogError("ChatGPT error: {@error}", new { image.Error?.Type, image.Error?.Message });
+            _logger.LogError("ChatGPT error: {@Error}", new { image.Error?.Type, image.Error?.Message });
             return await _botClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: "ChatGPT request wasn't successful." + (image.Error?.Message ?? string.Empty),

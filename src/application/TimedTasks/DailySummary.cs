@@ -1,12 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using OpenAI.Interfaces;
-using OpenAI.ObjectModels;
-using OpenAI.ObjectModels.RequestModels;
-using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Configuration;
@@ -114,6 +107,6 @@ public class DailySummary : TimedTask
             .Create(request, Models.Model.Gpt_4o, cancellationToken: cancellation);
         return completionResult.Successful
             ? completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content."
-            : throw new ApplicationException(completionResult?.Error?.Message ?? "Error sending open ai api request");
+            : throw new InvalidOperationException(completionResult?.Error?.Message ?? "Error sending open ai api request");
     }
 }

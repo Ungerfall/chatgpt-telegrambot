@@ -1,6 +1,6 @@
 ﻿using Microsoft.Azure.Cosmos;
-using OpenAI.Managers;
 using System.CommandLine;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Ungerfall.ChatGpt.TelegramBot;
@@ -55,15 +55,9 @@ rootCommand.SetHandler(async file =>
         return;
     }
 
-    var openAiApiKey = MaskInput("Enter your Open AI API key");
     var cosmosDbConn = MaskInput("Enter your cosmos db connection string");
     Console.WriteLine("Enter comma-separated chat ids:");
     long[] chats = (Console.ReadLine() ?? string.Empty).Split(',').Select(long.Parse).ToArray();
-    var openAiService = new OpenAIService(new OpenAI.OpenAiOptions
-    {
-        ApiKey = openAiApiKey,
-        DefaultModelId = OpenAI.ObjectModels.Models.Gpt_4o_mini,
-    });
     var cosmosClient = new CosmosClient(
         cosmosDbConn,
         clientOptions: new CosmosClientOptions
@@ -71,8 +65,8 @@ rootCommand.SetHandler(async file =>
             MaxRetryAttemptsOnRateLimitedRequests = 3,
             Serializer = new CosmosSystemTextJsonSerializer(),
         });
-    using var sr = file.OpenRead();
-    QuizSource[] quizzes = JsonSerializer.Deserialize(sr, typeof(QuizSource[]), QuizContext.Default) as QuizSource[]
+    await using var sr = file.OpenRead();
+    QuizSource[] quizzes = await JsonSerializer.DeserializeAsync(sr, typeof(QuizSource[]), QuizContext.Default) as QuizSource[]
         ?? throw new ArgumentException("Cannot deserialize file");
     var repo = new TimedTaskExecutionRepository(
         cosmosClient,
@@ -105,7 +99,7 @@ rootCommand.SetHandler(async file =>
     static string MaskInput(string intro)
     {
         Console.Write($"{intro}: ");
-        string password = "";
+        StringBuilder passwordBuilder = new();
         while (true)
         {
             var key = Console.ReadKey(true);
@@ -115,13 +109,13 @@ rootCommand.SetHandler(async file =>
             }
             else
             {
-                password += key.KeyChar;
+                passwordBuilder.Append(key.KeyChar);
                 Console.Write("*");
             }
         }
 
         Console.WriteLine();
-        return password;
+        return passwordBuilder.ToString();
     }
 }, fileOption);
 

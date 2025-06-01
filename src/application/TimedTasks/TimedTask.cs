@@ -1,8 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 
@@ -14,7 +11,7 @@ public abstract class TimedTask
 
     private readonly ILogger _logger;
 
-    internal TimedTask(ITimedTaskExecutionRepository repo, ITelegramBotClient botClient, ILogger logger)
+    private protected TimedTask(ITimedTaskExecutionRepository repo, ITelegramBotClient botClient, ILogger logger)
     {
         _botClient = botClient;
         _repo = repo;

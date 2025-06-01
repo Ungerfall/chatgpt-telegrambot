@@ -164,7 +164,7 @@ rootCommand.SetHandler(async (int? amount, int? category) =>
     static string MaskInput(string intro)
     {
         Console.Write($"{intro}: ");
-        string password = "";
+        StringBuilder passwordBuilder = new();
         while (true)
         {
             var key = Console.ReadKey(true);
@@ -174,13 +174,13 @@ rootCommand.SetHandler(async (int? amount, int? category) =>
             }
             else
             {
-                password += key.KeyChar;
+                passwordBuilder.Append(key.KeyChar);
                 Console.Write("*");
             }
         }
 
         Console.WriteLine();
-        return password;
+        return passwordBuilder.ToString();
     }
 }, numberOfQuestions
 , category);
