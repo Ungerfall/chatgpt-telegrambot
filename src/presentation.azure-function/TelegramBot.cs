@@ -41,7 +41,7 @@ public class TelegramBot
         }
         catch (Exception e)
         {
-            _logger.LogError("Exception: {exception}", e.Message);
+            _logger.LogError(e, "Exception during telegram bot azure function execution");
         }
 
         return output;

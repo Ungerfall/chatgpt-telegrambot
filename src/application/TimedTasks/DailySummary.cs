@@ -2,10 +2,18 @@
 using System.Runtime.CompilerServices;
 using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
+using Ungerfall.ChatGpt.TelegramBot.AzureOpenAi;
 using Ungerfall.ChatGpt.TelegramBot.Configuration;
 
 namespace Ungerfall.ChatGpt.TelegramBot.TimedTasks;
-public class DailySummary : TimedTask
+public class DailySummary(
+    DailySummaryChats chats,
+    ITelegramBotClient botClient,
+    ITimedTaskExecutionRepository repo,
+    ILogger<DailySummary> logger,
+    IWhitelist whitelist,
+    ITelegramMessageRepository messages,
+    AzureOpenAIClient azureOpenAiClient) : TimedTask(repo, botClient, logger)
 {
     public const string CRON_EXPRESSION = "0 55 23 * * *";
 
@@ -15,30 +23,10 @@ public class DailySummary : TimedTask
             Если есть неотвеченные вопросы, перечисли их и ответь.
             В конце с новой строки добавь самые релевантные #теги переписки до 5 штук.
             """;
-    private const float Temperature = .2f;
 
-    private readonly DailySummaryChats _chats;
-    private readonly IWhitelist _whitelist;
-    private readonly ITelegramMessageRepository _messages;
-    private readonly IOpenAIService _openAiService;
-    private readonly string _model = Models.Gpt_4o;
+    private readonly ChatClient _chat = azureOpenAiClient.GetChatClient(Deployments.Gpt_4_1);
 
-    public DailySummary(
-        DailySummaryChats chats,
-        ITelegramBotClient botClient,
-        ITimedTaskExecutionRepository repo,
-        ILogger<DailySummary> logger,
-        IWhitelist whitelist,
-        ITelegramMessageRepository messages,
-        IOpenAIService openAiService) : base(repo, botClient, logger)
-    {
-        _chats = chats;
-        _whitelist = whitelist;
-        _messages = messages;
-        _openAiService = openAiService;
-    }
-
-    protected override IEnumerable<long> ChatIds => _chats.Get();
+    protected override IEnumerable<long> ChatIds => chats.Get();
     protected override string Name => "Daily summary";
     protected override DateTime Date => DateTime.UtcNow;
     protected override string Type => "daily-summary";
@@ -62,26 +50,21 @@ public class DailySummary : TimedTask
             cancellationToken: default);
     }
 
-    private async IAsyncEnumerable<ChatCompletionCreateRequest> CreateGptRequestBatches(
+    private async IAsyncEnumerable<ChatMessage[]> CreateGptRequestBatches(
         long chatId,
         [EnumeratorCancellation] CancellationToken cancellation = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var builder = ChatMessageBuilder.Create()
             .WithTokenCounter()
-            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(chatId));
-        await foreach (var h in _messages.Get(chatId, today, cancellation))
+            .WithSystemRoleMessage(whitelist.GetSystemRoleMessage(chatId));
+        await foreach (var h in messages.Get(chatId, today, cancellation))
         {
             // hit tokens limit
             if (!builder.CanAddMessage)
             {
                 builder.AddUserMessage(Prompt);
-                yield return new ChatCompletionCreateRequest
-                {
-                    Messages = builder.Build(),
-                    Temperature = Temperature,
-                    Model = _model,
-                };
+                yield return builder.Build();
             }
 
             builder.AddMessage(h, 1); // descending order of items in history
@@ -93,20 +76,20 @@ public class DailySummary : TimedTask
         }
 
         builder.AddUserMessage(Prompt);
-        yield return new ChatCompletionCreateRequest
-        {
-            Messages = builder.Build(),
-            Temperature = Temperature,
-            Model = _model,
-        };
+        yield return builder.Build();
     }
 
-    private async Task<string> SendGptRequest(ChatCompletionCreateRequest request, CancellationToken cancellation = default)
+    private async Task<string> SendGptRequest(IEnumerable<ChatMessage> messages, CancellationToken cancellation = default)
     {
-        var completionResult = await _openAiService.ChatCompletion
-            .Create(request, Models.Model.Gpt_4o, cancellationToken: cancellation);
-        return completionResult.Successful
-            ? completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content."
-            : throw new InvalidOperationException(completionResult?.Error?.Message ?? "Error sending open ai api request");
+        ChatCompletion completionResult = await _chat.CompleteChatAsync(messages, cancellationToken: cancellation);
+        string result = completionResult.FinishReason switch
+        {
+            ChatFinishReason.Stop => completionResult.Content[0].Text,
+            ChatFinishReason.Length => completionResult.Content[0].Text + Environment.NewLine + "Finish reason: length",
+            ChatFinishReason.ContentFilter => "Finish reason: Content Filter. Refusal: " + completionResult.Refusal,
+            _ => $"Finish reason: {completionResult.FinishReason}",
+        };
+
+        return result;
     }
 }

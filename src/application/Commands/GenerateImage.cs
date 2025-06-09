@@ -1,64 +1,61 @@
 ﻿using Microsoft.Extensions.Logging;
+using OpenAI.Images;
+using System.ClientModel;
+using System.ClientModel.Primitives;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Ungerfall.ChatGpt.TelegramBot.AzureOpenAi;
 
 namespace Ungerfall.ChatGpt.TelegramBot.Commands;
-public class GenerateImage
+public class GenerateImage(
+    AzureOpenAIClient azureOpenAIClient,
+    ILogger<GenerateImage> logger,
+    ITelegramBotClient botClient)
 {
-    private readonly IOpenAIService _openAiService;
-    private readonly ITelegramBotClient _botClient;
-    private readonly ILogger<GenerateImage> _logger;
-
-    public GenerateImage(
-        IOpenAIService openAiService,
-        ILogger<GenerateImage> logger,
-        ITelegramBotClient botClient)
-    {
-        _openAiService = openAiService;
-        _logger = logger;
-        _botClient = botClient;
-    }
+    readonly ImageClient _imageClient = azureOpenAIClient.GetImageClient(Deployments.DallE3);
 
     public async Task<Message> Execute(Message message, string msgWithoutCommand, CancellationToken cancellation)
     {
         if (string.IsNullOrWhiteSpace(msgWithoutCommand))
         {
-            return await _botClient.SendMessage(
+            return await botClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: "Write an image description after the command.",
                 replyParameters: message.MessageId,
                 cancellationToken: cancellation);
         }
 
-        await _botClient.SendChatAction(
+        await botClient.SendChatAction(
             chatId: message.Chat.Id,
             ChatAction.UploadPhoto,
             cancellationToken: cancellation);
-        var image = await _openAiService.Image.CreateImage(
-            new ImageCreateRequest
+        ClientResult<GeneratedImage> result = await _imageClient.GenerateImageAsync(
+            prompt: msgWithoutCommand,
+            new ImageGenerationOptions
             {
-                Prompt = msgWithoutCommand,
-                Size = StaticValues.ImageStatics.Size.Size256,
-                N = 1,
-                User = message.From?.Username ?? "unknown",
+                Quality = GeneratedImageQuality.Standard,
+                Size = GeneratedImageSize.W1024xH1024,
+                Style = GeneratedImageStyle.Vivid,
+                EndUserId = message.From?.Username ?? "unknown",
             },
             cancellation);
-        if (image.Successful)
+        PipelineResponse rawResponse = result.GetRawResponse();
+        if (!rawResponse.IsError)
         {
-            return await _botClient.SendPhoto(
+            return await botClient.SendPhoto(
                 chatId: message.Chat.Id,
-                photo: InputFile.FromUri(image.Results[0].Url),
+                photo: InputFile.FromUri(result.Value.ImageUri),
                 replyParameters: message.MessageId,
                 hasSpoiler: true,
                 cancellationToken: cancellation);
         }
         else
         {
-            _logger.LogError("ChatGPT error: {@Error}", new { image.Error?.Type, image.Error?.Message });
-            return await _botClient.SendMessage(
+            logger.LogError("ChatGPT error: {@Error}", new { rawResponse.ReasonPhrase });
+            return await botClient.SendMessage(
                 chatId: message.Chat.Id,
-                text: "ChatGPT request wasn't successful." + (image.Error?.Message ?? string.Empty),
+                text: "ChatGPT request wasn't successful." + rawResponse.ReasonPhrase,
                 replyParameters: message.MessageId,
                 cancellationToken: cancellation);
         }

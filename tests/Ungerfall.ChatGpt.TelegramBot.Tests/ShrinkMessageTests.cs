@@ -1,7 +1,3 @@
-using Betalgo.Ranul.OpenAI.Interfaces;
-using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
-using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
-using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;

@@ -1,5 +1,5 @@
-using Betalgo.Ranul.OpenAI.Extensions;
-using Betalgo.Ranul.OpenAI.ObjectModels;
+using Azure;
+using Azure.AI.OpenAI;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,10 +27,6 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
         {
             var tgToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.Process)
                 ?? throw new ArgumentException("TELEGRAM_BOT_TOKEN is missing");
-            var openAiApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY", EnvironmentVariableTarget.Process)
-                ?? throw new ArgumentException("OPENAI_API_KEY is missing");
-            var openAiOrg = Environment.GetEnvironmentVariable("OPENAI_ORG", EnvironmentVariableTarget.Process)
-                ?? throw new ArgumentException("OPENAI_ORG is missing");
 
             return new HostBuilder()
                .ConfigureFunctionsWorkerDefaults()
@@ -38,12 +34,6 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                {
                    s.AddHttpClient("tgclient")
                        .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(tgToken, httpClient));
-                   s.AddOpenAIService(setup =>
-                   {
-                       setup.ApiKey = openAiApiKey;
-                       setup.Organization = openAiOrg;
-                       setup.DefaultModelId = Models.Gpt_4o_mini;
-                   });
                    s.Configure<CosmosDbOptions>(opt =>
                    {
                        opt.DatabaseId = Environment.GetEnvironmentVariable(
@@ -63,9 +53,15 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                            EnvironmentVariableTarget.Process)
                            ?? throw new ArgumentException("CosmosTimedTasksContainer is missing");
                    });
-                   s.AddAzureClients(c => c.AddServiceBusClient(Environment.GetEnvironmentVariable(
-                       "ServiceBusConnection",
-                       EnvironmentVariableTarget.Process)));
+                   s.AddAzureClients(c =>
+                   {
+                       c.AddServiceBusClient(Environment.GetEnvironmentVariable("ServiceBusConnection", EnvironmentVariableTarget.Process));
+                       c.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(opt =>
+                           new AzureOpenAIClient(
+                               new Uri(Environment.GetEnvironmentVariable("AZURE_OPENAI_URI", EnvironmentVariableTarget.Process) ?? throw new ArgumentNullException(nameof(opt))),
+                               new AzureKeyCredential(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY", EnvironmentVariableTarget.Process) ?? throw new ArgumentNullException(nameof(opt))),
+                               opt));
+                   });
                    s.AddSingleton(sp =>
                    {
                        var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;

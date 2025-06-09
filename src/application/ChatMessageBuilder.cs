@@ -12,7 +12,6 @@ public sealed class ChatMessageBuilder :
     private const double MaxTokens = 4096 * 0.4; // .3 is left for a gpt response
 
     private ITokenCounter _tokenCounter = null!;
-    private int _tokensSum;
     private List<ChatMessage> _message = [];
 
     private ChatMessageBuilder()
@@ -32,8 +31,8 @@ public sealed class ChatMessageBuilder :
 
     public IChatMessageBuilderAddMessagesState WithSystemRoleMessage(string msg)
     {
-        _message = [ChatMessage.FromSystem(msg)];
-        _tokensSum = _tokenCounter.Count(msg);
+        _message = [ChatMessage.CreateSystemMessage(msg)];
+        TokensCount = _tokenCounter.Count(msg);
         return this;
     }
 
@@ -43,26 +42,26 @@ public sealed class ChatMessageBuilder :
         {
             _message.Add(
                 message.User == BotUser
-                    ? ChatMessage.FromAssistant($"{message.Message}")
-                    : ChatMessage.FromUser($"{message.User}: {message.Message}"));
+                    ? ChatMessage.CreateAssistantMessage(message.Message)
+                    : ChatMessage.CreateUserMessage($"{message.User}: {message.Message}"));
         }
         else
         {
             _message.Insert(
                 index.Value,
                 message.User == BotUser
-                    ? ChatMessage.FromAssistant($"{message.Message}")
-                    : ChatMessage.FromUser($"{message.User}: {message.Message}"));
+                    ? ChatMessage.CreateAssistantMessage(message.Message)
+                    : ChatMessage.CreateUserMessage($"{message.User}: {message.Message}"));
         }
 
-        _tokensSum += _tokenCounter.Count(message.Message);
+        TokensCount += _tokenCounter.Count(message.Message);
         return this;
     }
 
     public IChatMessageBuilderAddMessagesState AddUserMessage(string message)
     {
-        _message.Add(ChatMessage.FromUser(message));
-        _tokensSum += _tokenCounter.Count(message);
+        _message.Add(ChatMessage.CreateUserMessage(message));
+        TokensCount += _tokenCounter.Count(message);
         return this;
     }
 
@@ -71,9 +70,9 @@ public sealed class ChatMessageBuilder :
         return [.. _message];
     }
 
-    public bool CanAddMessage => _tokensSum <= MaxTokens;
+    public bool CanAddMessage => TokensCount <= MaxTokens;
 
-    public int TokensCount => _tokensSum;
+    public int TokensCount { get; private set; }
 
-    public bool ContainsUserMessage => _message.Exists(x => x.Role == StaticValues.ChatMessageRoles.User);
+    public bool ContainsUserMessage => _message.Exists(x => x is UserChatMessage);
 }

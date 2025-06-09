@@ -1,5 +1,5 @@
-using Betalgo.Ranul.OpenAI.Extensions;
-using Betalgo.Ranul.OpenAI.ObjectModels;
+using Azure;
+using Azure.AI.OpenAI;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +10,7 @@ using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
+using Ungerfall.ChatGpt.TelegramBot.Configuration;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.TimedTasks;
 using Ungerfall.ChatGpt.TelegramBot.Worker;
@@ -41,13 +42,16 @@ IHost host = Host.CreateDefaultBuilder(args)
                     return new TelegramBotClient(options, httpClient);
                 });
 
-        services.AddOpenAIService(setup =>
+        services.AddAzureClients(c =>
         {
-            setup.ApiKey = context.Configuration["OPENAI_API_KEY"] ?? throw new ArgumentNullException(nameof(setup));
-            setup.Organization = context.Configuration["OPENAI_ORG"] ?? throw new ArgumentNullException(nameof(setup));
-            setup.DefaultModelId = Models.Gpt_4o_mini;
+            c.AddServiceBusClient(context.Configuration["ServiceBusConnection"]);
+            c.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(opt =>
+                new AzureOpenAIClient(
+                    new Uri(context.Configuration["AZURE_OPENAI_URI"] ?? throw new ArgumentNullException(nameof(opt))),
+                    new AzureKeyCredential(context.Configuration["AZURE_OPENAI_API_KEY"] ?? throw new ArgumentNullException(nameof(opt))),
+                    opt)
+            );
         });
-        services.AddAzureClients(c => c.AddServiceBusClient(context.Configuration["ServiceBusConnection"]));
         services.AddSingleton(sp =>
         {
             var opt = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
@@ -60,6 +64,7 @@ IHost host = Host.CreateDefaultBuilder(args)
                 });
         });
         services.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
+        services.AddScoped<ITimedTaskExecutionRepository, TimedTaskExecutionRepository>();
         services.AddScoped<PollingUpdateHandler>();
         services.AddScoped<ReceiverService>();
         services.AddScoped<ITokenCounter, TokenCounter>();
@@ -71,6 +76,9 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<DailyVideoGamesQuiz>();
         services.AddScoped<GenerateImage>();
         services.AddScoped<UpdateHandler>();
+        services.AddSingleton<TestUsers>();
+        services.AddSingleton<QuizChats>();
+        services.AddSingleton<DailySummaryChats>();
         services.AddHostedService<PollingService>();
     })
     .Build();

@@ -8,13 +8,12 @@
     <AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.3" />
-    <PackageReference Include="Betalgo.Ranul.OpenAI" Version="9.0.4" />
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+    <PackageReference Include="Azure.Core" Version="1.46.2" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.46.1">
         <AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.9.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.11.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.5" />
     <PackageReference Include="SharpToken" Version="2.0.3" />
     <PackageReference Include="Telegram.Bot" Version="22.3.0" />
