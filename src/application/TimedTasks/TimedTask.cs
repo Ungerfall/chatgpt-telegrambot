@@ -49,7 +49,7 @@ public abstract class TimedTask
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Timed Task ({Name}, {ChatId}) error", Name, chatId);
-                await _botClient.SendTextMessageAsync(
+                await _botClient.SendMessage(
                     chatId: chatId,
                     text: $"Ошибка выполнения запланированного события ({Name})");
             }

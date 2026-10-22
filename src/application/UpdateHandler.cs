@@ -91,7 +91,7 @@ public class UpdateHandler
             || _testUsers.Get().Contains(message.Chat.Id);
         if (!allowed)
         {
-            await _botClient.SendTextMessageAsync(
+            await _botClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: $"""
                 Only for my chat.
@@ -99,7 +99,7 @@ public class UpdateHandler
                 ```{JsonSerializer.Serialize(message.Chat, typeof(Chat), SourceGenerators.TelegramChatContext.Default)}```
                 """,
                 parseMode: ParseMode.Markdown,
-                replyToMessageId: message.MessageId,
+                replyParameters: message.Id,
                 cancellationToken: cancellation);
             return;
         }
@@ -136,23 +136,23 @@ public class UpdateHandler
         if (!activateBot)
         {
             _logger.LogInformation("Bot action is not expected");
-            await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
+            await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation);
             return msg;
         }
 
-        await _botClient.SendChatActionAsync(
+        await _botClient.SendChatAction(
             chatId: chatId,
             ChatAction.Typing,
             cancellationToken: cancellation);
         var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, chatId, cancellation);
-        var sent = await _botClient.SendTextMessageAsync(
+        var sent = await _botClient.SendMessage(
             chatId: chatId,
             text: $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}",
-            replyToMessageId: msg.MessageId,
+            replyParameters: msg.Id,
             cancellationToken: cancellation);
-        await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
-        await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.MessageId, sent.Date, BotUsername[1..], cancellation);
-        _logger.LogInformation("The message was sent with id: {SentMessageId}", sent.MessageId);
+        await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation);
+        await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.Id, sent.Date, BotUsername[1..], cancellation);
+        _logger.LogInformation("The message was sent with id: {SentMessageId}", sent.Id);
         return sent;
 
         static long UserId(Message msg) => msg.From?.Id ?? default;

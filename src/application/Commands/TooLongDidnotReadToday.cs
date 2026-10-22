@@ -42,7 +42,7 @@ public class TooLongDidNotReadToday
 
     public async Task<Message> Execute(long chatId, CancellationToken cancellation = default)
     {
-        await _botClient.SendChatActionAsync(
+        await _botClient.SendChatAction(
             chatId: chatId,
             ChatAction.Typing,
             cancellationToken: cancellation);
@@ -56,7 +56,7 @@ public class TooLongDidNotReadToday
         var telegramMessage = summaries.Length == 0
             ? "Сегодня ничего не произошло"
             : $"{string.Join(NewLine, summaries)}{NewLine}TL;DR не записывается в историю";
-        return await _botClient.SendTextMessageAsync(
+        return await _botClient.SendMessage(
             chatId: chatId,
             text: telegramMessage,
             cancellationToken: cancellation);

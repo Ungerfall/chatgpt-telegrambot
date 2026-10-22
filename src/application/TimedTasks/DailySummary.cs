@@ -73,7 +73,7 @@ public class DailySummary : TimedTask
                 length--;
             }
 
-            await _botClient.SendTextMessageAsync(
+            await _botClient.SendMessage(
                 chatId: chatId,
                 text: telegramMessage.Substring(offset, length),
                 cancellationToken: default);
