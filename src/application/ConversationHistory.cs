@@ -10,17 +10,20 @@ public class ConversationHistory
     private readonly string _message;
     private readonly ITokenCounter _tokenCounter;
     private readonly IWhitelist _whitelist;
+    private readonly int? _messageThreadId;
 
     public ConversationHistory(
         ITelegramMessageRepository history,
         string message,
         ITokenCounter tokenCounter,
-        IWhitelist whitelist)
+        IWhitelist whitelist,
+        int? messageThreadId = default)
     {
         _history = history;
         _message = message;
         _tokenCounter = tokenCounter;
         _whitelist = whitelist;
+        _messageThreadId = messageThreadId;
     }
 
     public async Task<(ChatMessage[], int tokens)> GetForChatGpt(long chatId, CancellationToken cancellation)
@@ -30,6 +33,7 @@ public class ConversationHistory
             .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(chatId), _message);
         await foreach (var h in _history.GetAllOrderByDateDescending(chatId, cancellation))
         {
+            if ((h.MessageThreadId ?? 0) != (_messageThreadId ?? 0)) continue;
             if (!mb.CanAddMessage(h))
             {
                 break;

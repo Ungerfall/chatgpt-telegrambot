@@ -14,5 +14,6 @@ namespace Ungerfall.ChatGpt.TelegramBot.SourceGenerators;
 [JsonSerializable(typeof(Database.ConversationState))]
 [JsonSerializable(typeof(Database.ConversationReceipt))]
 [JsonSerializable(typeof(Database.ConversationBudget))]
+[JsonSerializable(typeof(Database.TldrCache))]
 [JsonSerializable(typeof(int[]))]
 internal partial class CosmosContext : JsonSerializerContext;

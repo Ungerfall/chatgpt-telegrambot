@@ -49,7 +49,7 @@ public class UpdateHandlerTest
         var handler = new UpdateHandler(
             botClientMock, loggerMock, openAiServiceMock, messageRepoMock, tokenCounterMock,
             new TooLongDidNotReadToday(messageRepoMock, tokenCounterMock, openAiServiceMock,
-                Substitute.For<ILogger<TooLongDidNotReadToday>>(), botClientMock, whitelistMock),
+                Substitute.For<ILogger<TooLongDidNotReadToday>>(), botClientMock, whitelistMock, Substitute.For<ITimedTaskExecutionRepository>()),
             whitelistMock,
             new GenerateImage(openAiServiceMock, Substitute.For<ILogger<GenerateImage>>(), botClientMock),
             new TestUsers(), conversationRepoMock,
@@ -124,7 +124,7 @@ public class UpdateHandlerTest
         var handler = new UpdateHandler(
             botClientMock, loggerMock, openAiServiceMock, messageRepoMock, tokenCounterMock,
             new TooLongDidNotReadToday(messageRepoMock, tokenCounterMock, openAiServiceMock,
-                Substitute.For<ILogger<TooLongDidNotReadToday>>(), botClientMock, whitelistMock),
+                Substitute.For<ILogger<TooLongDidNotReadToday>>(), botClientMock, whitelistMock, Substitute.For<ITimedTaskExecutionRepository>()),
             whitelistMock,
             new GenerateImage(openAiServiceMock, Substitute.For<ILogger<GenerateImage>>(), botClientMock),
             new TestUsers(), conversationRepoMock,

@@ -38,6 +38,7 @@ public class TelegramMessageRepository : ITelegramMessageRepository
                 User = message.User,
                 UserId = message.UserId,
                 MessageId = message.MessageId,
+                MessageThreadId = message.MessageThreadId,
                 Message = message.Message,
                 Date = message.Date,
                 DateUtc = date,

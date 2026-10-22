@@ -116,6 +116,7 @@ public sealed class ChatMessageBuilder :
             // Split an oversized message without dropping characters or cutting a surrogate pair.
             for (var offset = 0; offset < message.Message.Length;)
             {
+                cancellation.ThrowIfCancellationRequested();
                 var low = 1;
                 var high = message.Message.Length - offset;
                 var length = 0;

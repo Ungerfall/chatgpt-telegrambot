@@ -26,6 +26,8 @@ public class TelegramMessage
     [JsonPropertyName("messageId")]
     public int MessageId { get; init; }
 
+    public int? MessageThreadId { get; init; }
+
     [JsonPropertyName("date")]
     public DateTime Date { get; init; }
 

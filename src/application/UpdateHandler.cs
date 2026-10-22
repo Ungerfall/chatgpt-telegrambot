@@ -230,7 +230,7 @@ public class UpdateHandler
         if (decision == ConversationDecision.Ignore)
         {
             _logger.LogInformation("Bot action is not expected");
-            await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation);
+            await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation, msg.MessageThreadId);
             await _conversationPolicy.Observe(msg, null, null, cancellation);
             return msg;
         }
@@ -241,13 +241,14 @@ public class UpdateHandler
             cancellationToken: cancellation);
         var autonomous = decision == ConversationDecision.Interjection;
         var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, chatId, cancellation,
-            !activateBot ? receipt.DecisionInput : null, autonomous: autonomous, silentOnFailure: !activateBot);
+            !activateBot ? receipt.DecisionInput : null, autonomous: autonomous, silentOnFailure: !activateBot,
+            messageThreadId: msg.MessageThreadId);
         if (!activateBot && (string.IsNullOrWhiteSpace(chatGptResponse)
             || autonomous && !await _conversationPolicy.TryMarkInterjection(msg, cancellation)))
         {
             receipt.Decision = ConversationDecision.Ignore;
             await _conversations.SaveReceipt(receipt, cancellation);
-            await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation);
+            await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation, msg.MessageThreadId);
             await _conversationPolicy.Observe(msg, null, null, cancellation);
             return msg;
         }
@@ -259,8 +260,8 @@ public class UpdateHandler
             replyParameters: msg.Id,
             messageThreadId: msg.MessageThreadId,
             cancellationToken: cancellation);
-        await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation);
-        await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.Id, sent.Date, BotUsername[1..], cancellation);
+        await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation, msg.MessageThreadId);
+        await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.Id, sent.Date, BotUsername[1..], cancellation, msg.MessageThreadId);
         await _conversationPolicy.Observe(msg, sent, chatGptResponse, cancellation, autonomous: autonomous, addressed: activateBot);
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sent.Id);
         return sent;
@@ -279,7 +280,8 @@ public class UpdateHandler
         int messageId,
         DateTime date,
         string user,
-        CancellationToken cancellation)
+        CancellationToken cancellation,
+        int? messageThreadId = default)
     {
         await _telegramMessagesRepository.Create(
             new Database.TelegramMessage
@@ -289,6 +291,7 @@ public class UpdateHandler
                 UserId = userId,
                 Message = message,
                 MessageId = messageId,
+                MessageThreadId = messageThreadId,
                 Date = date,
             },
             cancellation);
@@ -296,7 +299,7 @@ public class UpdateHandler
 
     private async Task<(string, int?)> SendChatGptMessage(
         string message, string user, long chatId, CancellationToken cancellation,
-        string? decisionContext = default, bool autonomous = false, bool silentOnFailure = false)
+        string? decisionContext = default, bool autonomous = false, bool silentOnFailure = false, int? messageThreadId = default)
     {
         _logger.LogInformation("Sending {Message} from {User}", message, user);
 
@@ -318,7 +321,7 @@ public class UpdateHandler
         }
         else
         {
-            var history = new ConversationHistory(_telegramMessagesRepository, $"{user}: {message}", _tokenCounter, _whitelist);
+            var history = new ConversationHistory(_telegramMessagesRepository, $"{user}: {message}", _tokenCounter, _whitelist, messageThreadId);
             (gptMessage, tokensCount) = await history.GetForChatGpt(chatId, cancellation);
         }
         var completionResult = await _openAiService.ChatCompletion.Create(

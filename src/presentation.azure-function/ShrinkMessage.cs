@@ -61,6 +61,7 @@ public class ShrinkMessage
                         UserId = msg.UserId,
                         Message = shrunkMsg,
                         MessageId = msg.MessageId,
+                        MessageThreadId = msg.MessageThreadId,
                         Date = msg.Date,
                         DateUtc = msg.DateUtc,
                         TTL = msg.TTL,
