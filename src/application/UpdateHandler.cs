@@ -136,7 +136,7 @@ public class UpdateHandler
         if (!activateBot)
         {
             _logger.LogInformation("Bot action is not expected");
-            _ = SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
+            await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
             return msg;
         }
 
@@ -151,7 +151,7 @@ public class UpdateHandler
             replyToMessageId: msg.MessageId,
             cancellationToken: cancellation);
         await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.MessageId, msg.Date, user, cancellation);
-        await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.MessageId, sent.Date, user, cancellation);
+        await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.MessageId, sent.Date, BotUsername[1..], cancellation);
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sent.MessageId);
         return sent;
 

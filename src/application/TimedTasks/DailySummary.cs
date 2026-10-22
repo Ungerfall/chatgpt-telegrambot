@@ -62,11 +62,23 @@ public class DailySummary : TimedTask
         var telegramMessage = summaries.Length == 0
             ? "Сегодня ничего не произошло"
             : string.Join(Environment.NewLine, summaries);
-        await _botClient.SendTextMessageAsync(
-            chatId: chatId,
-            text: telegramMessage,
-            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-            cancellationToken: default);
+        const int maxMessageLength = 4096;
+        for (var offset = 0; offset < telegramMessage.Length;)
+        {
+            var length = Math.Min(maxMessageLength, telegramMessage.Length - offset);
+            if (offset + length < telegramMessage.Length
+                && char.IsHighSurrogate(telegramMessage[offset + length - 1])
+                && char.IsLowSurrogate(telegramMessage[offset + length]))
+            {
+                length--;
+            }
+
+            await _botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: telegramMessage.Substring(offset, length),
+                cancellationToken: default);
+            offset += length;
+        }
     }
 
     private async IAsyncEnumerable<ChatCompletionCreateRequest> CreateGptRequestBatches(
@@ -74,9 +86,10 @@ public class DailySummary : TimedTask
         [EnumeratorCancellation] CancellationToken cancellation = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var systemRole = _whitelist.GetSystemRoleMessage(chatId);
         var builder = ChatMessageBuilder.Create()
             .WithTokenCounter()
-            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(chatId));
+            .WithSystemRoleMessage(systemRole);
         await foreach (var h in _messages.Get(chatId, today, cancellation))
         {
             // hit tokens limit
@@ -89,6 +102,9 @@ public class DailySummary : TimedTask
                     Temperature = Temperature,
                     Model = _model,
                 };
+                builder = ChatMessageBuilder.Create()
+                    .WithTokenCounter()
+                    .WithSystemRoleMessage(systemRole);
             }
 
             builder.AddMessage(h, 1); // descending order of items in history
