@@ -20,7 +20,14 @@ public class QueuedUpdateHandler
     public async Task Run([ServiceBusTrigger(Const.TGBOT_UPDATES, Connection = "ServiceBusConnection")] Update update)
     {
         _logger.LogInformation("C# ServiceBus queue trigger function processed message: {update}", update.Message);
-        await _updateHandler.Handle(update, CancellationToken.None);
+        try
+        {
+            await _updateHandler.Handle(update, CancellationToken.None);
+        }
+        catch (TelegramDeliveryUnknownException ex)
+        {
+            _logger.LogError(ex, "Delivery of update {UpdateId} is unconfirmed; skipping automatic retry", update.Id);
+        }
         _logger.LogInformation("C# ServiceBus queue trigger function finished");
     }
 }

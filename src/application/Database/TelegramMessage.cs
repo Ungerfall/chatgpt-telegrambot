@@ -26,6 +26,8 @@ public class TelegramMessage
     [JsonPropertyName("messageId")]
     public int MessageId { get; init; }
 
+    public int? MessageThreadId { get; init; }
+
     [JsonPropertyName("date")]
     public DateTime Date { get; init; }
 
@@ -37,6 +39,13 @@ public class TelegramMessage
 
     [JsonPropertyName("isShrunk")]
     public bool IsShrunk { get; init; }
+
+    public bool ShrinkProcessed { get; set; }
+    public int? ShrinkSkippedBelowTokens { get; set; }
+    public DateTime? ShrinkLeaseUntilUtc { get; set; }
+
+    [JsonIgnore]
+    public string? ETag { get; set; }
 
     /// <summary>
     /// In case of message is shrunk

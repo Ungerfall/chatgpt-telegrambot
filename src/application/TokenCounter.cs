@@ -8,6 +8,6 @@ public sealed class TokenCounter : ITokenCounter
 
     public int Count(string text)
     {
-        return Encoding.Encode(text).Count;
+        return Encoding.CountTokens(text);
     }
 }

@@ -36,6 +36,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                .ConfigureFunctionsWorkerDefaults()
                .ConfigureServices(s =>
                {
+                   s.Configure<System.Text.Json.JsonSerializerOptions>(JsonBotAPI.Configure);
                    s.AddHttpClient("tgclient")
                        .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(tgToken, httpClient));
                    s.AddOpenAIService(setup =>
@@ -78,6 +79,10 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                            });
                    });
                    s.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
+                   s.AddScoped<IConversationRepository, ConversationRepository>();
+                   s.AddScoped<ConversationPolicy>();
+                   s.AddHttpClient<DecisionsClient>(client => client.MaxResponseContentBufferSize = 32768);
+                   s.AddSingleton<ConversationPolicyChats>();
                    s.AddScoped<ITimedTaskExecutionRepository, TimedTaskExecutionRepository>();
                    s.AddScoped<ITokenCounter, TokenCounter>();
                    s.AddScoped<IWhitelist, Whitelist>();
@@ -87,6 +92,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                    s.AddScoped<DailyFilmsQuiz>();
                    s.AddScoped<DailyVideoGamesQuiz>();
                    s.AddScoped<GenerateImage>();
+                   s.AddScoped<PersonalSettings>();
                    s.AddScoped<UpdateHandler>();
                    s.AddSingleton<TestUsers>();
                    s.AddSingleton<QuizChats>();

@@ -10,4 +10,7 @@ public interface ITimedTaskExecutionRepository
     Task<bool> Exists(long chatId, string name, DateTime date, CancellationToken cancellation);
     Task<TimedTaskQuiz?> GetQuiz(long chatId, string type, CancellationToken cancellation);
     Task CompleteQuiz(TimedTaskQuiz quiz, CancellationToken cancellation);
+    Task<TldrCache> BeginTldr(long chatId, string id, CancellationToken cancellation);
+    Task CompleteTldr(TldrCache cache, CancellationToken cancellation);
+    Task ReleaseTldr(TldrCache cache, CancellationToken cancellation);
 }

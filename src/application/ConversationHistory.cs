@@ -10,27 +10,31 @@ public class ConversationHistory
     private readonly string _message;
     private readonly ITokenCounter _tokenCounter;
     private readonly IWhitelist _whitelist;
+    private readonly int? _messageThreadId;
 
     public ConversationHistory(
         ITelegramMessageRepository history,
         string message,
         ITokenCounter tokenCounter,
-        IWhitelist whitelist)
+        IWhitelist whitelist,
+        int? messageThreadId = default)
     {
         _history = history;
         _message = message;
         _tokenCounter = tokenCounter;
         _whitelist = whitelist;
+        _messageThreadId = messageThreadId;
     }
 
     public async Task<(ChatMessage[], int tokens)> GetForChatGpt(long chatId, CancellationToken cancellation)
     {
         var mb = ChatMessageBuilder.Create()
             .WithTokenCounter(_tokenCounter)
-            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(chatId));
+            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(chatId), _message);
         await foreach (var h in _history.GetAllOrderByDateDescending(chatId, cancellation))
         {
-            if (!mb.CanAddMessage)
+            if ((h.MessageThreadId ?? 0) != (_messageThreadId ?? 0)) continue;
+            if (!mb.CanAddMessage(h))
             {
                 break;
             }
@@ -38,7 +42,6 @@ public class ConversationHistory
             mb.AddMessage(h, 1); // because of descending order of items in history
         }
 
-        mb.AddUserMessage(_message);
         return (mb.Build(), mb.TokensCount);
     }
 }

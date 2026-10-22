@@ -32,7 +32,8 @@ public class ShrinkMessageTest
         messageRepoMock.GetOldMessages(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<TelegramMessage> { oldMessage }.ToAsyncEnumerable());
 
-        tokenCounterMock.Count(oldMessage.Message).Returns(25);
+        messageRepoMock.TryBeginShrink(oldMessage, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(true);
+        tokenCounterMock.Count(oldMessage.Message).Returns(1024);
         tokenCounterMock.Count(Arg.Is<string>(p => !p.Equals(oldMessage.Message))).Returns(10);
 
         openAiServiceMock.ChatCompletion.CreateCompletion(
@@ -86,7 +87,8 @@ public class ShrinkMessageTest
         messageRepoMock.GetOldMessages(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<TelegramMessage> { oldMessage }.ToAsyncEnumerable());
 
-        tokenCounterMock.Count(oldMessage.Message).Returns(25);
+        messageRepoMock.TryBeginShrink(oldMessage, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(true);
+        tokenCounterMock.Count(oldMessage.Message).Returns(1024);
 
         openAiServiceMock.ChatCompletion.CreateCompletion(
                 Arg.Any<ChatCompletionCreateRequest>(),
@@ -128,8 +130,9 @@ public class ShrinkMessageTest
         messageRepoMock.GetOldMessages(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<TelegramMessage> { oldMessage }.ToAsyncEnumerable());
 
-        tokenCounterMock.Count(oldMessage.Message).Returns(6);
-        tokenCounterMock.Count(Arg.Is<string>(p => !p.Equals(oldMessage.Message))).Returns(10);
+        messageRepoMock.TryBeginShrink(oldMessage, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(true);
+        tokenCounterMock.Count(oldMessage.Message).Returns(1024);
+        tokenCounterMock.Count(Arg.Is<string>(p => !p.Equals(oldMessage.Message))).Returns(2048);
 
         openAiServiceMock.ChatCompletion.CreateCompletion(
                 Arg.Any<ChatCompletionCreateRequest>(),

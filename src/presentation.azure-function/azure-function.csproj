@@ -24,7 +24,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <PackageReference Include="SharpToken" Version="2.0.3" />
-    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+    <PackageReference Include="Telegram.Bot" Version="22.10.3.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\application\Ungerfall.ChatGpt.TelegramBot.csproj" />

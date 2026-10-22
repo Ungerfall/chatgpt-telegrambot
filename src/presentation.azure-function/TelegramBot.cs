@@ -1,10 +1,11 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction;
@@ -30,7 +31,7 @@ public class TelegramBot
         try
         {
             var body = await req.ReadAsStringAsync() ?? throw new ArgumentNullException(nameof(req));
-            var update = JsonConvert.DeserializeObject<Update>(body);
+            var update = JsonSerializer.Deserialize<Update>(body, JsonBotAPI.Options);
             if (update is null)
             {
                 _logger.LogWarning("Unable to deserialize Update object.");
