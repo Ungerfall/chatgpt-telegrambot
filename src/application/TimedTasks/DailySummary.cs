@@ -62,23 +62,11 @@ public class DailySummary : TimedTask
         var telegramMessage = summaries.Length == 0
             ? "Сегодня ничего не произошло"
             : string.Join(Environment.NewLine, summaries);
-        const int maxMessageLength = 4096;
-        for (var offset = 0; offset < telegramMessage.Length;)
-        {
-            var length = Math.Min(maxMessageLength, telegramMessage.Length - offset);
-            if (offset + length < telegramMessage.Length
-                && char.IsHighSurrogate(telegramMessage[offset + length - 1])
-                && char.IsLowSurrogate(telegramMessage[offset + length]))
-            {
-                length--;
-            }
-
-            await _botClient.SendMessage(
-                chatId: chatId,
-                text: telegramMessage.Substring(offset, length),
-                cancellationToken: default);
-            offset += length;
-        }
+        await _botClient.SendResponse(
+            chatId: chatId,
+            text: telegramMessage,
+            useRich: chatId < 0 && _whitelist.IsGroupAllowedToUseBot(chatId),
+            cancellationToken: default);
     }
 
     private async IAsyncEnumerable<ChatCompletionCreateRequest> CreateGptRequestBatches(

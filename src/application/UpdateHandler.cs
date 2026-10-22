@@ -112,7 +112,10 @@ public class UpdateHandler
         var action = command switch
         {
             "/image" => _imageCommand.Execute(message, msgWithoutCommand, cancellation),
-            "/tldrtoday" => _tooLongDidnotReadCommand.Execute(message.Chat.Id, cancellation),
+            "/tldrtoday" => _tooLongDidnotReadCommand.Execute(
+                message.Chat.Id, cancellation,
+                useRich: message.Chat.Type is ChatType.Group or ChatType.Supergroup,
+                messageThreadId: message.MessageThreadId),
             _ => OnMessageReceived(message, messageText, cancellation),
         };
         await action;
@@ -145,10 +148,12 @@ public class UpdateHandler
             ChatAction.Typing,
             cancellationToken: cancellation);
         var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, chatId, cancellation);
-        var sent = await _botClient.SendMessage(
+        var sent = await _botClient.SendResponse(
             chatId: chatId,
             text: $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}",
+            useRich: msg.Chat.Type is ChatType.Group or ChatType.Supergroup,
             replyParameters: msg.Id,
+            messageThreadId: msg.MessageThreadId,
             cancellationToken: cancellation);
         await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation);
         await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.Id, sent.Date, BotUsername[1..], cancellation);

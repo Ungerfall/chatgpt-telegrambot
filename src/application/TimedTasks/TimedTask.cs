@@ -46,6 +46,10 @@ public abstract class TimedTask
                     },
                     cancellation: default);
             }
+            catch (TelegramDeliveryUnknownException ex)
+            {
+                _logger.LogError(ex, "Timed Task ({Name}, {ChatId}) delivery is unconfirmed; skipping automatic resend", Name, chatId);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Timed Task ({Name}, {ChatId}) error", Name, chatId);

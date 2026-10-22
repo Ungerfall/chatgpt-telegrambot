@@ -40,7 +40,11 @@ public class TooLongDidNotReadToday
         _whitelist = whitelist;
     }
 
-    public async Task<Message> Execute(long chatId, CancellationToken cancellation = default)
+    public async Task<Message> Execute(
+        long chatId,
+        CancellationToken cancellation = default,
+        bool useRich = false,
+        int? messageThreadId = default)
     {
         await _botClient.SendChatAction(
             chatId: chatId,
@@ -56,9 +60,11 @@ public class TooLongDidNotReadToday
         var telegramMessage = summaries.Length == 0
             ? "Сегодня ничего не произошло"
             : $"{string.Join(NewLine, summaries)}{NewLine}TL;DR не записывается в историю";
-        return await _botClient.SendMessage(
+        return await _botClient.SendResponse(
             chatId: chatId,
             text: telegramMessage,
+            useRich: useRich,
+            messageThreadId: messageThreadId,
             cancellationToken: cancellation);
     }
 
@@ -68,9 +74,10 @@ public class TooLongDidNotReadToday
     {
         const float temperature = .2f;
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var systemRole = _whitelist.GetSystemRoleMessage(chatId);
         var mb = ChatMessageBuilder.Create()
             .WithTokenCounter(_tokenCounter)
-            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(chatId));
+            .WithSystemRoleMessage(systemRole);
         await foreach (var h in _history.Get(chatId, today, cancellation))
         {
             if (!mb.CanAddMessage)
@@ -83,6 +90,9 @@ public class TooLongDidNotReadToday
                     Temperature = temperature,
                     Model = Models.Gpt_4o_mini,
                 };
+                mb = ChatMessageBuilder.Create()
+                    .WithTokenCounter(_tokenCounter)
+                    .WithSystemRoleMessage(systemRole);
             }
 
             mb.AddMessage(h, 1); // because of descending order of items in history
