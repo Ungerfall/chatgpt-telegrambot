@@ -9,14 +9,13 @@ public interface IChatMessageBuilderTokenCounterState
 }
 public interface IChatMessageBuilderSystemRoleState
 {
-    IChatMessageBuilderAddMessagesState WithSystemRoleMessage(string msg);
+    IChatMessageBuilderAddMessagesState WithSystemRoleMessage(string msg, string? lastUserMessage = null);
 }
 public interface IChatMessageBuilderAddMessagesState
 {
     IChatMessageBuilderAddMessagesState AddMessage(TelegramMessage message, int? index = null);
-    IChatMessageBuilderAddMessagesState AddUserMessage(string message);
     ChatMessage[] Build();
-    bool CanAddMessage { get; }
+    bool CanAddMessage(TelegramMessage message);
     int TokensCount { get; }
-    bool ContainsUserMessage { get; }
+    bool ContainsHistory { get; }
 }

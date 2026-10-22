@@ -27,10 +27,10 @@ public class ConversationHistory
     {
         var mb = ChatMessageBuilder.Create()
             .WithTokenCounter(_tokenCounter)
-            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(chatId));
+            .WithSystemRoleMessage(_whitelist.GetSystemRoleMessage(chatId), _message);
         await foreach (var h in _history.GetAllOrderByDateDescending(chatId, cancellation))
         {
-            if (!mb.CanAddMessage)
+            if (!mb.CanAddMessage(h))
             {
                 break;
             }
@@ -38,7 +38,6 @@ public class ConversationHistory
             mb.AddMessage(h, 1); // because of descending order of items in history
         }
 
-        mb.AddUserMessage(_message);
         return (mb.Build(), mb.TokensCount);
     }
 }

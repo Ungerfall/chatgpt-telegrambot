@@ -28,6 +28,7 @@ public class DailySummary : TimedTask
     private readonly IWhitelist _whitelist;
     private readonly ITelegramMessageRepository _messages;
     private readonly IOpenAIService _openAiService;
+    private readonly ILogger<DailySummary> _logger;
     private readonly string _model = Models.Gpt_4o;
 
     public DailySummary(
@@ -43,6 +44,7 @@ public class DailySummary : TimedTask
         _whitelist = whitelist;
         _messages = messages;
         _openAiService = openAiService;
+        _logger = logger;
     }
 
     protected override IEnumerable<long> ChatIds => _chats.Get();
@@ -55,7 +57,7 @@ public class DailySummary : TimedTask
         var gptTasks = new List<Task<string>>();
         await foreach (var r in CreateGptRequestBatches(chatId, cancellation: default))
         {
-            gptTasks.Add(SendGptRequest(r, cancellation: default));
+            gptTasks.Add(SendGptRequest(r, chatId, cancellation: default));
         }
 
         var summaries = await Task.WhenAll(gptTasks);
@@ -75,47 +77,19 @@ public class DailySummary : TimedTask
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var systemRole = _whitelist.GetSystemRoleMessage(chatId);
-        var builder = ChatMessageBuilder.Create()
-            .WithTokenCounter()
-            .WithSystemRoleMessage(systemRole);
-        await foreach (var h in _messages.Get(chatId, today, cancellation))
+        await foreach (var batch in ChatMessageBuilder.CreateBatches(
+            _messages.Get(chatId, today, cancellation), systemRole, Prompt, cancellation: cancellation))
         {
-            // hit tokens limit
-            if (!builder.CanAddMessage)
-            {
-                builder.AddUserMessage(Prompt);
-                yield return new ChatCompletionCreateRequest
-                {
-                    Messages = builder.Build(),
-                    Temperature = Temperature,
-                    Model = _model,
-                };
-                builder = ChatMessageBuilder.Create()
-                    .WithTokenCounter()
-                    .WithSystemRoleMessage(systemRole);
-            }
-
-            builder.AddMessage(h, 1); // descending order of items in history
+            yield return new ChatCompletionCreateRequest { Messages = batch, Temperature = Temperature, Model = _model };
         }
-
-        if (!builder.ContainsUserMessage)
-        {
-            yield break;
-        }
-
-        builder.AddUserMessage(Prompt);
-        yield return new ChatCompletionCreateRequest
-        {
-            Messages = builder.Build(),
-            Temperature = Temperature,
-            Model = _model,
-        };
     }
 
-    private async Task<string> SendGptRequest(ChatCompletionCreateRequest request, CancellationToken cancellation = default)
+    private async Task<string> SendGptRequest(ChatCompletionCreateRequest request, long chatId, CancellationToken cancellation = default)
     {
         var completionResult = await _openAiService.ChatCompletion
             .Create(request, Models.Model.Gpt_4o, cancellationToken: cancellation);
+        _logger.LogInformation("Daily summary tokens for chat {ChatId}: {@tokens}", chatId,
+            new { completionResult.Usage?.PromptTokens, completionResult.Usage?.CompletionTokens, completionResult.Usage?.TotalTokens });
         return completionResult.Successful
             ? completionResult?.Choices[0]?.Message?.Content ?? "Successful, but no content."
             : throw new ApplicationException(completionResult?.Error?.Message ?? "Error sending open ai api request");

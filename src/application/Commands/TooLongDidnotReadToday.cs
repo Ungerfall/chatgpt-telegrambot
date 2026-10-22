@@ -77,42 +77,11 @@ public class TooLongDidNotReadToday
         const float temperature = .2f;
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var systemRole = _whitelist.GetSystemRoleMessage(chatId);
-        var mb = ChatMessageBuilder.Create()
-            .WithTokenCounter(_tokenCounter)
-            .WithSystemRoleMessage(systemRole);
-        await foreach (var h in _history.Get(chatId, today, cancellation))
+        await foreach (var batch in ChatMessageBuilder.CreateBatches(
+            _history.Get(chatId, today, cancellation), systemRole, AskForTLDR, _tokenCounter, cancellation))
         {
-            if (!mb.CanAddMessage)
-            {
-                mb.AddUserMessage(AskForTLDR);
-                _logger.LogInformation("My tokens counter: {tokens}", mb.TokensCount);
-                yield return new ChatCompletionCreateRequest
-                {
-                    Messages = mb.Build(),
-                    Temperature = temperature,
-                    Model = Models.Gpt_4o_mini,
-                };
-                mb = ChatMessageBuilder.Create()
-                    .WithTokenCounter(_tokenCounter)
-                    .WithSystemRoleMessage(systemRole);
-            }
-
-            mb.AddMessage(h, 1); // because of descending order of items in history
+            yield return new ChatCompletionCreateRequest { Messages = batch, Temperature = temperature, Model = Models.Gpt_4o_mini };
         }
-
-        if (!mb.ContainsUserMessage)
-        {
-            yield break;
-        }
-
-        mb.AddUserMessage(AskForTLDR);
-        var gptMessage = mb.Build();
-        yield return new ChatCompletionCreateRequest
-        {
-            Messages = gptMessage,
-            Temperature = temperature,
-            Model = Models.Gpt_4o_mini,
-        };
     }
 
     private async Task<string> SendGptRequest(ChatCompletionCreateRequest request, CancellationToken cancellation = default)
