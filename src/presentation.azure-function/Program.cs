@@ -81,6 +81,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                    s.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
                    s.AddScoped<IConversationRepository, ConversationRepository>();
                    s.AddScoped<ConversationPolicy>();
+                   s.AddHttpClient<DecisionsClient>(client => client.MaxResponseContentBufferSize = 32768);
                    s.AddSingleton<ConversationPolicyChats>();
                    s.AddScoped<ITimedTaskExecutionRepository, TimedTaskExecutionRepository>();
                    s.AddScoped<ITokenCounter, TokenCounter>();

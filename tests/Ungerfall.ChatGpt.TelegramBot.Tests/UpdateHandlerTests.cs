@@ -53,7 +53,8 @@ public class UpdateHandlerTest
             whitelistMock,
             new GenerateImage(openAiServiceMock, Substitute.For<ILogger<GenerateImage>>(), botClientMock),
             new TestUsers(), conversationRepoMock,
-            new ConversationPolicy(conversationRepoMock, new ConversationPolicyChats(), Substitute.For<ILogger<ConversationPolicy>>()));
+            new ConversationPolicy(conversationRepoMock, new ConversationPolicyChats(), Substitute.For<ILogger<ConversationPolicy>>(),
+                new DecisionsClient(new HttpClient(), Substitute.For<ILogger<DecisionsClient>>())));
 
         // Act
         var handling = handler.Handle(update, default);
@@ -126,7 +127,8 @@ public class UpdateHandlerTest
             whitelistMock,
             new GenerateImage(openAiServiceMock, Substitute.For<ILogger<GenerateImage>>(), botClientMock),
             new TestUsers(), conversationRepoMock,
-            new ConversationPolicy(conversationRepoMock, new ConversationPolicyChats(), Substitute.For<ILogger<ConversationPolicy>>()));
+            new ConversationPolicy(conversationRepoMock, new ConversationPolicyChats(), Substitute.For<ILogger<ConversationPolicy>>(),
+                new DecisionsClient(new HttpClient(), Substitute.For<ILogger<DecisionsClient>>())));
 
         // Act
         await handler.Handle(update, default);

@@ -67,6 +67,12 @@ public class ConversationRepository : IConversationRepository
     {
         var current = await Read<ConversationReceipt>(receipt.Id, receipt.ChatId, cancellation);
         if (current?.LeaseId != receipt.LeaseId) return;
+        if (current.DecisionAttempted)
+        {
+            current.LeaseUntilUtc = DateTime.UtcNow;
+            await SaveReceipt(current, cancellation);
+            return;
+        }
         await _container.DeleteItemAsync<ConversationReceipt>(receipt.Id, new PartitionKey(receipt.ChatId),
             new ItemRequestOptions { IfMatchEtag = current.ETag }, cancellation);
     }
@@ -99,6 +105,36 @@ public class ConversationRepository : IConversationRepository
         }
     }
 
+    public async Task<ConversationBudget> GetBudget(long chatId, CancellationToken cancellation)
+    {
+        return await Read<ConversationBudget>("conversation-budget", chatId, cancellation)
+            ?? new ConversationBudget { ChatId = chatId };
+    }
+
+    public async Task<bool> ReserveDecision(
+        ConversationReceipt receipt, ConversationState state, ConversationBudget budget, CancellationToken cancellation)
+    {
+        var batch = _container.CreateTransactionalBatch(new PartitionKey(receipt.ChatId));
+        if (state.ETag == null) batch.CreateItem(state);
+        else batch.ReplaceItem(state.Id, state, new TransactionalBatchItemRequestOptions { IfMatchEtag = state.ETag });
+        if (budget.ETag == null) batch.CreateItem(budget);
+        else batch.ReplaceItem(budget.Id, budget, new TransactionalBatchItemRequestOptions { IfMatchEtag = budget.ETag });
+        receipt.DecisionAttempted = true;
+        batch.ReplaceItem(receipt.Id, receipt, new TransactionalBatchItemRequestOptions { IfMatchEtag = receipt.ETag });
+        using var result = await batch.ExecuteAsync(cancellation);
+        if (result.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed)
+        {
+            receipt.DecisionAttempted = false;
+            return false;
+        }
+        if (!result.IsSuccessStatusCode)
+        {
+            throw new CosmosException(result.ErrorMessage, result.StatusCode, 0, result.ActivityId, result.RequestCharge);
+        }
+        receipt.ETag = result.GetOperationResultAtIndex<ConversationReceipt>(2).ETag;
+        return true;
+    }
+
     private async Task<T?> Read<T>(string id, long chatId, CancellationToken cancellation) where T : class
     {
         try
@@ -106,6 +142,7 @@ public class ConversationRepository : IConversationRepository
             var response = await _container.ReadItemAsync<T>(id, new PartitionKey(chatId), cancellationToken: cancellation);
             if (response.Resource is ConversationReceipt receipt) receipt.ETag = response.ETag;
             if (response.Resource is ConversationState state) state.ETag = response.ETag;
+            if (response.Resource is ConversationBudget budget) budget.ETag = response.ETag;
             return response.Resource;
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)

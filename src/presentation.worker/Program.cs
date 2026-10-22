@@ -63,6 +63,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
         services.AddScoped<IConversationRepository, ConversationRepository>();
         services.AddScoped<ConversationPolicy>();
+        services.AddHttpClient<DecisionsClient>(client => client.MaxResponseContentBufferSize = 32768);
         services.AddSingleton<ConversationPolicyChats>();
         services.AddScoped<PollingUpdateHandler>();
         services.AddScoped<ReceiverService>();

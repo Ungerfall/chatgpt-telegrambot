@@ -10,4 +10,6 @@ public interface IConversationRepository
     Task Release(ConversationReceipt receipt, CancellationToken cancellation);
     Task<ConversationState> Get(long chatId, int topicId, CancellationToken cancellation);
     Task<bool> Save(ConversationState state, CancellationToken cancellation);
+    Task<ConversationBudget> GetBudget(long chatId, CancellationToken cancellation);
+    Task<bool> ReserveDecision(ConversationReceipt receipt, ConversationState state, ConversationBudget budget, CancellationToken cancellation);
 }
