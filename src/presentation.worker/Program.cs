@@ -75,6 +75,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<DailyFilmsQuiz>();
         services.AddScoped<DailyVideoGamesQuiz>();
         services.AddScoped<GenerateImage>();
+        services.AddScoped<PersonalSettings>();
+        services.AddSingleton<TestUsers>();
         services.AddScoped<UpdateHandler>();
         services.AddHostedService<PollingService>();
     })

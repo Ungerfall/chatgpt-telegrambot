@@ -92,6 +92,7 @@ namespace Ungerfall.ChatGpt.TelegramBot.AzureFunction
                    s.AddScoped<DailyFilmsQuiz>();
                    s.AddScoped<DailyVideoGamesQuiz>();
                    s.AddScoped<GenerateImage>();
+                   s.AddScoped<PersonalSettings>();
                    s.AddScoped<UpdateHandler>();
                    s.AddSingleton<TestUsers>();
                    s.AddSingleton<QuizChats>();

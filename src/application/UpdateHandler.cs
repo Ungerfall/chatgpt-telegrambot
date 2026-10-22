@@ -28,6 +28,7 @@ public class UpdateHandler
     private readonly ITokenCounter _tokenCounter;
     private readonly TooLongDidNotReadToday _tooLongDidnotReadCommand;
     private readonly GenerateImage _imageCommand;
+    private readonly PersonalSettings _personalSettingsCommand;
     private readonly IWhitelist _whitelist;
     private readonly TestUsers _testUsers;
     private readonly IConversationRepository _conversations;
@@ -44,7 +45,8 @@ public class UpdateHandler
         GenerateImage imageCommand,
         TestUsers testUsers,
         IConversationRepository conversations,
-        ConversationPolicy conversationPolicy)
+        ConversationPolicy conversationPolicy,
+        PersonalSettings personalSettingsCommand)
     {
         _botClient = botClient;
         _logger = logger;
@@ -57,6 +59,7 @@ public class UpdateHandler
         _testUsers = testUsers;
         _conversations = conversations;
         _conversationPolicy = conversationPolicy;
+        _personalSettingsCommand = personalSettingsCommand;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -80,6 +83,8 @@ public class UpdateHandler
              { ChatMember: { } }         => UpdateType.ChatMember,
              { ChatJoinRequest: { } }    => UpdateType.ChatJoinRequest,
             */
+            { CallbackQuery: { Data: { } data } query } when data.StartsWith("settings:", StringComparison.Ordinal)
+                => BotOnCallbackQueryReceived(query, cancellation),
             { Message: { } message } => BotOnMessageReceived(message, cancellation),
             _ => UnknownUpdateHandlerAsync(update, cancellation)
         };
@@ -89,6 +94,18 @@ public class UpdateHandler
 
     private async Task BotOnMessageReceived(Message message, CancellationToken cancellation)
     {
+        if (message.EphemeralMessageId != null)
+        {
+            // Ephemeral commands have message_id = 0 and must never enter shared history or receipts.
+            var command = message.Text?.Split(' ', 2)[0];
+            if (message.Chat.Type is ChatType.Group or ChatType.Supergroup
+                && message.From is { IsBot: false } && !IsBot(message.From)
+                && _whitelist.IsGroupAllowedToUseBot(message.Chat.Id)
+                && (string.Equals(command, "/settings", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(command, $"/settings{BotUsername}", StringComparison.OrdinalIgnoreCase)))
+                await _personalSettingsCommand.Execute(message, cancellation);
+            return;
+        }
         _logger.LogInformation("Receive message {@message}", new { message.Text, message.Type, message.Chat.Id });
         if (string.IsNullOrWhiteSpace(message.Text) || message.From?.IsBot == true || IsBot(message.From))
             return;
@@ -145,6 +162,7 @@ public class UpdateHandler
             var action = command switch
             {
                 "/image" => _imageCommand.Execute(message, msgWithoutCommand, cancellation, BeforeSend),
+                "/settings" => _personalSettingsCommand.Execute(message, cancellation, BeforeSend),
                 "/tldrtoday" => _tooLongDidnotReadCommand.Execute(
                     message.Chat.Id, cancellation,
                     useRich: message.Chat.Type is ChatType.Group or ChatType.Supergroup,
@@ -175,6 +193,15 @@ public class UpdateHandler
             }
             throw;
         }
+    }
+
+    private Task BotOnCallbackQueryReceived(CallbackQuery query, CancellationToken cancellation)
+    {
+        var chat = query.Message?.Chat;
+        bool allowed = chat != null && (chat.Type == ChatType.Private
+            ? chat.Id == query.From.Id && _testUsers.Get().Contains(chat.Id)
+            : chat.Type is ChatType.Group or ChatType.Supergroup && _whitelist.IsGroupAllowedToUseBot(chat.Id));
+        return allowed ? _personalSettingsCommand.Execute(query, cancellation) : Task.CompletedTask;
     }
 
     private async Task<Message> OnMessageReceived(
