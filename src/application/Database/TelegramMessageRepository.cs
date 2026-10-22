@@ -112,6 +112,7 @@ public class TelegramMessageRepository : ITelegramMessageRepository
         var olderThanDate = DateTime.UtcNow.AddHours(-1d);
         var query = new QueryDefinition(@"SELECT * FROM c
                 WHERE (NOT IS_DEFINED(c.isShrunk) OR c.isShrunk = false)
+                    AND LENGTH(c.message) > 25
                     AND (NOT IS_DEFINED(c.shrinkProcessed) OR c.shrinkProcessed = false)
                     AND (NOT IS_DEFINED(c.shrinkSkippedBelowTokens) OR IS_NULL(c.shrinkSkippedBelowTokens) OR c.shrinkSkippedBelowTokens != @minTokens)
                     AND (NOT IS_DEFINED(c.shrinkLeaseUntilUtc) OR IS_NULL(c.shrinkLeaseUntilUtc) OR c.shrinkLeaseUntilUtc < @now)
