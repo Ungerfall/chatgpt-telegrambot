@@ -38,6 +38,13 @@ public class TelegramMessage
     [JsonPropertyName("isShrunk")]
     public bool IsShrunk { get; init; }
 
+    public bool ShrinkProcessed { get; set; }
+    public int? ShrinkSkippedBelowTokens { get; set; }
+    public DateTime? ShrinkLeaseUntilUtc { get; set; }
+
+    [JsonIgnore]
+    public string? ETag { get; set; }
+
     /// <summary>
     /// In case of message is shrunk
     /// </summary>
