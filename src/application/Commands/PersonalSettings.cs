@@ -50,6 +50,10 @@ public class PersonalSettings
             await _botClient.SendResponse(message.Chat.Id, OpenPrivateChat,
                 messageThreadId: message.MessageThreadId, cancellationToken: cancellation);
         }
+        catch (ApiRequestException ex) when (TelegramDeliveryRejectedException.IsDefiniteRejection(ex))
+        {
+            throw new TelegramDeliveryRejectedException(ex);
+        }
         catch (RequestException ex) when (ex is not ApiRequestException)
         {
             throw new TelegramDeliveryUnknownException(ex);

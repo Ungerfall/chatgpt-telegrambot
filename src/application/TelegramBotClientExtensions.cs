@@ -84,6 +84,10 @@ public static class TelegramBotClientExtensions
             {
                 // Only an explicit API rejection allows a fallback; a timeout must not trigger another send.
             }
+            catch (ApiRequestException ex) when (TelegramDeliveryRejectedException.IsDefiniteRejection(ex))
+            {
+                throw new TelegramDeliveryRejectedException(ex);
+            }
         }
 
         Message? first = default;
@@ -98,12 +102,20 @@ public static class TelegramBotClientExtensions
                 length--;
             }
 
-            var sent = await botClient.SendMessage(
-                chatId: chatId,
-                text: text.Substring(offset, length),
-                replyParameters: replyParameters,
-                messageThreadId: messageThreadId,
-                cancellationToken: cancellationToken);
+            Message sent;
+            try
+            {
+                sent = await botClient.SendMessage(
+                    chatId: chatId,
+                    text: text.Substring(offset, length),
+                    replyParameters: replyParameters,
+                    messageThreadId: messageThreadId,
+                    cancellationToken: cancellationToken);
+            }
+            catch (ApiRequestException ex) when (first == null && TelegramDeliveryRejectedException.IsDefiniteRejection(ex))
+            {
+                throw new TelegramDeliveryRejectedException(ex);
+            }
             first ??= sent;
             offset += length;
         }

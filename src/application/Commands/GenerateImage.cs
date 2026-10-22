@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -34,7 +35,7 @@ public class GenerateImage
         if (string.IsNullOrWhiteSpace(msgWithoutCommand))
         {
             if (beforeSend != null) await beforeSend();
-            return await _botClient.SendMessage(
+            return await _botClient.SendResponse(
                 chatId: message.Chat.Id,
                 text: "Write an image description after the command.",
                 replyParameters: message.Id,
@@ -57,18 +58,29 @@ public class GenerateImage
         if (image.Successful)
         {
             if (beforeSend != null) await beforeSend();
-            return await _botClient.SendPhoto(
-                chatId: message.Chat.Id,
-                photo: InputFile.FromUri(image.Results[0].Url),
-                hasSpoiler: true,
-                replyParameters: message.Id,
-                cancellationToken: cancellation);
+            try
+            {
+                return await _botClient.SendPhoto(
+                    chatId: message.Chat.Id,
+                    photo: InputFile.FromUri(image.Results[0].Url),
+                    hasSpoiler: true,
+                    replyParameters: message.Id,
+                    cancellationToken: cancellation);
+            }
+            catch (ApiRequestException ex) when (TelegramDeliveryRejectedException.IsDefiniteRejection(ex))
+            {
+                throw new TelegramDeliveryRejectedException(ex);
+            }
+            catch (RequestException ex) when (ex is not ApiRequestException)
+            {
+                throw new TelegramDeliveryUnknownException(ex);
+            }
         }
         else
         {
             _logger.LogError("ChatGPT error: {@error}", new { image.Error?.Type, image.Error?.Message });
             if (beforeSend != null) await beforeSend();
-            return await _botClient.SendMessage(
+            return await _botClient.SendResponse(
                 chatId: message.Chat.Id,
                 text: "ChatGPT request wasn't successful." + (image.Error?.Message ?? string.Empty),
                 replyParameters: message.Id,

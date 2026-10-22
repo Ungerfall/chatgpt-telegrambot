@@ -65,10 +65,13 @@ public class ConversationRepository : IConversationRepository
 
     public async Task Release(ConversationReceipt receipt, CancellationToken cancellation)
     {
+        if (receipt.Stage != ConversationReceipt.Processing)
+            throw new InvalidOperationException("Only a processing message can be released for retry.");
         var current = await Read<ConversationReceipt>(receipt.Id, receipt.ChatId, cancellation);
         if (current?.LeaseId != receipt.LeaseId) return;
         if (current.DecisionAttempted)
         {
+            current.Stage = ConversationReceipt.Processing;
             current.LeaseUntilUtc = DateTime.UtcNow;
             await SaveReceipt(current, cancellation);
             return;

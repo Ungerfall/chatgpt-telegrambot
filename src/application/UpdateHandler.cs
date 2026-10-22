@@ -178,8 +178,13 @@ public class UpdateHandler
             receipt.Stage = Database.ConversationReceipt.Completed;
             await _conversations.SaveReceipt(receipt, cancellation);
         }
-        catch
+        catch (Exception error)
         {
+            if (error is TelegramDeliveryRejectedException && receipt.Stage == Database.ConversationReceipt.Sending)
+            {
+                receipt.Stage = Database.ConversationReceipt.Processing;
+                _logger.LogWarning(error, "Telegram rejected the first send for ({ChatId}, {MessageId}); releasing for retry", message.Chat.Id, message.Id);
+            }
             if (receipt.Stage == Database.ConversationReceipt.Processing)
             {
                 try
