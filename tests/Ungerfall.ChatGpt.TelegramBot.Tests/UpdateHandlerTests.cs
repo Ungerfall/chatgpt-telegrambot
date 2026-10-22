@@ -27,6 +27,9 @@ public class UpdateHandlerTest
         var messageRepoMock = Substitute.For<ITelegramMessageRepository>();
         var tokenCounterMock = Substitute.For<ITokenCounter>();
         var whitelistMock = Substitute.For<IWhitelist>();
+        var conversationRepoMock = Substitute.For<IConversationRepository>();
+        conversationRepoMock.Begin(chatId, Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new ConversationReceipt());
         var saved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var error = new InvalidOperationException("Database unavailable");
         var update = new Update
@@ -49,7 +52,8 @@ public class UpdateHandlerTest
                 Substitute.For<ILogger<TooLongDidNotReadToday>>(), botClientMock, whitelistMock),
             whitelistMock,
             new GenerateImage(openAiServiceMock, Substitute.For<ILogger<GenerateImage>>(), botClientMock),
-            new TestUsers());
+            new TestUsers(), conversationRepoMock,
+            new ConversationPolicy(conversationRepoMock, new ConversationPolicyChats(), Substitute.For<ILogger<ConversationPolicy>>()));
 
         // Act
         var handling = handler.Handle(update, default);
@@ -74,6 +78,9 @@ public class UpdateHandlerTest
         var messageRepoMock = Substitute.For<ITelegramMessageRepository>();
         var tokenCounterMock = Substitute.For<ITokenCounter>();
         var whitelistMock = Substitute.For<IWhitelist>();
+        var conversationRepoMock = Substitute.For<IConversationRepository>();
+        conversationRepoMock.Begin(chatId, Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new ConversationReceipt());
         var messages = new List<TelegramMessage>();
         var chat = new Chat { Id = chatId, Type = ChatType.Private };
         var sent = new Message
@@ -118,7 +125,8 @@ public class UpdateHandlerTest
                 Substitute.For<ILogger<TooLongDidNotReadToday>>(), botClientMock, whitelistMock),
             whitelistMock,
             new GenerateImage(openAiServiceMock, Substitute.For<ILogger<GenerateImage>>(), botClientMock),
-            new TestUsers());
+            new TestUsers(), conversationRepoMock,
+            new ConversationPolicy(conversationRepoMock, new ConversationPolicyChats(), Substitute.For<ILogger<ConversationPolicy>>()));
 
         // Act
         await handler.Handle(update, default);

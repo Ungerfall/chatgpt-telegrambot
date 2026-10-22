@@ -44,7 +44,8 @@ public class TooLongDidNotReadToday
         long chatId,
         CancellationToken cancellation = default,
         bool useRich = false,
-        int? messageThreadId = default)
+        int? messageThreadId = default,
+        Func<Task>? beforeSend = default)
     {
         await _botClient.SendChatAction(
             chatId: chatId,
@@ -60,6 +61,7 @@ public class TooLongDidNotReadToday
         var telegramMessage = summaries.Length == 0
             ? "Сегодня ничего не произошло"
             : $"{string.Join(NewLine, summaries)}{NewLine}TL;DR не записывается в историю";
+        if (beforeSend != null) await beforeSend();
         return await _botClient.SendResponse(
             chatId: chatId,
             text: telegramMessage,

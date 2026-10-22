@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using OpenAI.Interfaces;
 using OpenAI.ObjectModels;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -24,10 +25,15 @@ public class GenerateImage
         _botClient = botClient;
     }
 
-    public async Task<Message> Execute(Message message, string msgWithoutCommand, CancellationToken cancellation)
+    public async Task<Message> Execute(
+        Message message,
+        string msgWithoutCommand,
+        CancellationToken cancellation,
+        Func<Task>? beforeSend = default)
     {
         if (string.IsNullOrWhiteSpace(msgWithoutCommand))
         {
+            if (beforeSend != null) await beforeSend();
             return await _botClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: "Write an image description after the command.",
@@ -50,6 +56,7 @@ public class GenerateImage
             cancellation);
         if (image.Successful)
         {
+            if (beforeSend != null) await beforeSend();
             return await _botClient.SendPhoto(
                 chatId: message.Chat.Id,
                 photo: InputFile.FromUri(image.Results[0].Url),
@@ -60,6 +67,7 @@ public class GenerateImage
         else
         {
             _logger.LogError("ChatGPT error: {@error}", new { image.Error?.Type, image.Error?.Message });
+            if (beforeSend != null) await beforeSend();
             return await _botClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: "ChatGPT request wasn't successful." + (image.Error?.Message ?? string.Empty),

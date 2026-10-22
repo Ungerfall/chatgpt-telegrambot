@@ -30,6 +30,8 @@ public class UpdateHandler
     private readonly GenerateImage _imageCommand;
     private readonly IWhitelist _whitelist;
     private readonly TestUsers _testUsers;
+    private readonly IConversationRepository _conversations;
+    private readonly ConversationPolicy _conversationPolicy;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
@@ -40,7 +42,9 @@ public class UpdateHandler
         TooLongDidNotReadToday tooLongDidnotReadCommand,
         IWhitelist whitelist,
         GenerateImage imageCommand,
-        TestUsers testUsers)
+        TestUsers testUsers,
+        IConversationRepository conversations,
+        ConversationPolicy conversationPolicy)
     {
         _botClient = botClient;
         _logger = logger;
@@ -51,6 +55,8 @@ public class UpdateHandler
         _whitelist = whitelist;
         _imageCommand = imageCommand;
         _testUsers = testUsers;
+        _conversations = conversations;
+        _conversationPolicy = conversationPolicy;
     }
 
     public async Task Handle(Update update, CancellationToken cancellation)
@@ -84,8 +90,9 @@ public class UpdateHandler
     private async Task BotOnMessageReceived(Message message, CancellationToken cancellation)
     {
         _logger.LogInformation("Receive message {@message}", new { message.Text, message.Type, message.Chat.Id });
-        if (message.Text is not { } messageText)
+        if (string.IsNullOrWhiteSpace(message.Text) || message.From?.IsBot == true || IsBot(message.From))
             return;
+        var messageText = message.Text;
 
         bool allowed = _whitelist.IsGroupAllowedToUseBot(message.Chat.Id)
             || _testUsers.Get().Contains(message.Chat.Id);
@@ -104,42 +111,92 @@ public class UpdateHandler
             return;
         }
 
-        int commandEndIndex = messageText.GetCommandEndIndex();
-        string command = messageText[0] == '/'
-            ? messageText[0..commandEndIndex]
-            : string.Empty;
-        string msgWithoutCommand = messageText[commandEndIndex..];
-        var action = command switch
+        var receipt = await _conversations.Begin(message.Chat.Id, message.Id, cancellation);
+        if (receipt == null) return;
+        try
         {
-            "/image" => _imageCommand.Execute(message, msgWithoutCommand, cancellation),
-            "/tldrtoday" => _tooLongDidnotReadCommand.Execute(
-                message.Chat.Id, cancellation,
-                useRich: message.Chat.Type is ChatType.Group or ChatType.Supergroup,
-                messageThreadId: message.MessageThreadId),
-            _ => OnMessageReceived(message, messageText, cancellation),
-        };
-        await action;
+            int commandEndIndex = messageText.GetCommandEndIndex();
+            string command = messageText[0] == '/' ? messageText[..commandEndIndex].ToLowerInvariant() : string.Empty;
+            bool otherBotCommand = false;
+            if (command.Length > 0 && commandEndIndex < messageText.Length && messageText[commandEndIndex] == '@')
+            {
+                var targetEnd = messageText.IndexOf(' ', commandEndIndex);
+                if (targetEnd < 0) targetEnd = messageText.Length;
+                otherBotCommand = !messageText[commandEndIndex..targetEnd].Equals(BotUsername, StringComparison.OrdinalIgnoreCase);
+                commandEndIndex = targetEnd;
+                if (otherBotCommand) command = string.Empty;
+            }
+
+            async Task BeforeSend()
+            {
+                receipt.Stage = Database.ConversationReceipt.Sending;
+                try
+                {
+                    await _conversations.SaveReceipt(receipt, cancellation);
+                }
+                catch
+                {
+                    receipt.Stage = Database.ConversationReceipt.Processing;
+                    throw;
+                }
+            }
+
+            string msgWithoutCommand = messageText[commandEndIndex..];
+            var action = command switch
+            {
+                "/image" => _imageCommand.Execute(message, msgWithoutCommand, cancellation, BeforeSend),
+                "/tldrtoday" => _tooLongDidnotReadCommand.Execute(
+                    message.Chat.Id, cancellation,
+                    useRich: message.Chat.Type is ChatType.Group or ChatType.Supergroup,
+                    messageThreadId: message.MessageThreadId,
+                    beforeSend: BeforeSend),
+                _ => OnMessageReceived(message, messageText, command.Length > 0, otherBotCommand, BeforeSend, cancellation),
+            };
+            await action;
+            if (command is "/image" or "/tldrtoday")
+            {
+                await _conversationPolicy.Observe(message, null, null, cancellation);
+            }
+            receipt.Stage = Database.ConversationReceipt.Completed;
+            await _conversations.SaveReceipt(receipt, cancellation);
+        }
+        catch
+        {
+            if (receipt.Stage == Database.ConversationReceipt.Processing)
+            {
+                try
+                {
+                    await _conversations.Release(receipt, CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unable to release message ({ChatId}, {MessageId}) for retry", message.Chat.Id, message.Id);
+                }
+            }
+            throw;
+        }
     }
 
-    private async Task<Message> OnMessageReceived(Message msg, string messageText, CancellationToken cancellation)
+    private async Task<Message> OnMessageReceived(
+        Message msg,
+        string messageText,
+        bool isCommand,
+        bool otherBotCommand,
+        Func<Task> beforeSend,
+        CancellationToken cancellation)
     {
-        bool activateBot = msg switch
-        {
-            var m when (m.Chat.Type == ChatType.Group)
-                && (msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false)
-                && (msg.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false) => true,
-            var m when (m.Chat.Type == ChatType.Supergroup)
-                && (msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false)
-                && (msg.EntityValues?.Any(x => x.Equals(BotUsername)) ?? false) => true,
-            { Chat.Type: ChatType.Private } => true,
-            _ => false,
-        };
+        bool activateBot = !otherBotCommand && (msg.Chat.Type == ChatType.Private || isCommand
+            || IsBot(msg.ReplyToMessage?.From)
+            || ((msg.Entities?.Any(x => x.Type == MessageEntityType.Mention) ?? false)
+                && (msg.EntityValues?.Any(x => x.Equals(BotUsername, StringComparison.OrdinalIgnoreCase)) ?? false))
+            || (msg.Entities?.Any(x => x.Type == MessageEntityType.TextMention && IsBot(x.User)) ?? false));
         var user = msg.From?.FirstName ?? msg.From?.Username ?? "unknown";
         var chatId = msg.Chat.Id;
         if (!activateBot)
         {
             _logger.LogInformation("Bot action is not expected");
             await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation);
+            await _conversationPolicy.Observe(msg, null, null, cancellation);
             return msg;
         }
 
@@ -148,6 +205,7 @@ public class UpdateHandler
             ChatAction.Typing,
             cancellationToken: cancellation);
         var (chatGptResponse, tokens) = await SendChatGptMessage(messageText, user, chatId, cancellation);
+        await beforeSend();
         var sent = await _botClient.SendResponse(
             chatId: chatId,
             text: $"{chatGptResponse}{Environment.NewLine}tokens: {tokens}",
@@ -157,11 +215,16 @@ public class UpdateHandler
             cancellationToken: cancellation);
         await SaveToHistory(chatId, UserId(msg), msg.Text!, msg.Id, msg.Date, user, cancellation);
         await SaveToHistory(chatId, UserId(sent), chatGptResponse, sent.Id, sent.Date, BotUsername[1..], cancellation);
+        await _conversationPolicy.Observe(msg, sent, chatGptResponse, cancellation);
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sent.Id);
         return sent;
 
         static long UserId(Message msg) => msg.From?.Id ?? default;
     }
+
+    private bool IsBot(User? user) => user != null
+        && ((_botClient.BotId != 0 && user.Id == _botClient.BotId)
+            || string.Equals(user.Username, BotUsername[1..], StringComparison.OrdinalIgnoreCase));
 
     private async Task SaveToHistory(
         long chatId,

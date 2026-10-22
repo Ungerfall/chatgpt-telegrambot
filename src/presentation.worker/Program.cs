@@ -10,6 +10,7 @@ using Telegram.Bot;
 using Ungerfall.ChatGpt.TelegramBot;
 using Ungerfall.ChatGpt.TelegramBot.Abstractions;
 using Ungerfall.ChatGpt.TelegramBot.Commands;
+using Ungerfall.ChatGpt.TelegramBot.Configuration;
 using Ungerfall.ChatGpt.TelegramBot.Database;
 using Ungerfall.ChatGpt.TelegramBot.TimedTasks;
 using Ungerfall.ChatGpt.TelegramBot.Worker;
@@ -60,6 +61,9 @@ IHost host = Host.CreateDefaultBuilder(args)
                 });
         });
         services.AddScoped<ITelegramMessageRepository, TelegramMessageRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
+        services.AddScoped<ConversationPolicy>();
+        services.AddSingleton<ConversationPolicyChats>();
         services.AddScoped<PollingUpdateHandler>();
         services.AddScoped<ReceiverService>();
         services.AddScoped<ITokenCounter, TokenCounter>();
